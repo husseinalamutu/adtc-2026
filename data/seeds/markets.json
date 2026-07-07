@@ -20,7 +20,8 @@
       "mobile_money": ["OPay", "MoMo PSB", "PalmPay"],
       "vat_registration_threshold_local": 25000000,
       "tax_authority": "Federal Inland Revenue Service (FIRS)",
-      "cities": ["Lagos", "Abuja", "Kano", "Ibadan", "Port Harcourt"]
+      "cities": ["Lagos", "Abuja", "Kano", "Ibadan", "Port Harcourt"],
+      "_deprecated_note": "This entry is used only by templated_gen.py for invoice/reconciliation math (VAT rate here is confirmed correct). It is NOT the compliance fact source for Nigeria — that generic withholding_tax_rate/vat_registration_threshold_local are placeholders and are now WRONG per the 2025 Tax Reform Acts (small-company CIT/CGT/levy exemption threshold is NGN 100,000,000, not 25,000,000; WHT varies by transaction type, not a flat 5%). All Nigeria compliance/advisory content must be generated from seeds/nigeria_tax_facts.json via generators/nigeria_tax_gen.py, not from this file."
     },
     {
       "country": "Ghana",

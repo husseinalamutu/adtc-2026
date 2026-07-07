@@ -26,7 +26,10 @@ from anthropic.types.message_create_params import MessageCreateParamsNonStreamin
 from anthropic.types.messages.batch_create_params import Request
 
 SEEDS = json.loads((Path(__file__).parent.parent / "seeds" / "markets.json").read_text())
-MARKETS = SEEDS["markets"]
+# Nigeria is excluded here: it gets deep, source-grounded coverage from
+# generators/nigeria_tax_gen.py (seeds/nigeria_tax_facts.json). Keeping it in this
+# generic pool would risk generating conflicting/shallower Nigeria tax claims.
+MARKETS = [m for m in SEEDS["markets"] if m["country"] != "Nigeria"]
 ARCHETYPES = SEEDS["business_archetypes"]
 PERSONAS = SEEDS["operator_personas"]
 

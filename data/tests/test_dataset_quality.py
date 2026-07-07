@@ -18,6 +18,7 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT / "generators"))
 
 import templated_gen  # noqa: E402
+import nigeria_tax_gen  # noqa: E402
 
 
 def _gen_examples(n=200, seed=99):
@@ -121,6 +122,39 @@ class TestReconciliationArithmetic:
 # ---------------------------------------------------------------------------
 # Determinism / uniqueness
 # ---------------------------------------------------------------------------
+class TestNigeriaTaxFactGrounding:
+    """No API calls — pure fact-path validation. If this fails, the generator would
+    crash (or silently drop rows) the moment it's run against the real API, wasting
+    batch cost. Run before every nigeria_tax_gen.py invocation."""
+
+    def test_every_fact_path_resolves(self):
+        all_topics = nigeria_tax_gen.FACT_TOPICS + nigeria_tax_gen.DIASPORA_TOPICS
+        for label, path in all_topics:
+            nigeria_tax_gen.get_fact(path)  # raises KeyError if broken
+
+    def test_build_requests_dry_run(self):
+        reqs, families = nigeria_tax_gen.build_requests(30, seed=1)
+        assert len(reqs) == 30
+        assert len(families) == 30
+        assert all(f.startswith("nigeria_tax::") for f in families.values())
+
+    def test_no_fact_marked_unconfirmed_is_used_without_a_confidence_tag(self):
+        """Every leaf fact dict passed to the model must carry a confidence tag, or the
+        anti-hallucination system prompt has nothing to hedge on."""
+        for label, path in nigeria_tax_gen.FACT_TOPICS + nigeria_tax_gen.DIASPORA_TOPICS:
+            fact = nigeria_tax_gen.get_fact(path)
+
+            def check(node):
+                if isinstance(node, dict):
+                    if "value" in node:
+                        assert "confidence" in node, f"{path}: leaf fact missing confidence tag: {node}"
+                    else:
+                        for v in node.values():
+                            check(v)
+
+            check(fact)
+
+
 def test_generator_is_seed_deterministic():
     a = _gen_examples(n=50, seed=555)
     b = _gen_examples(n=50, seed=555)
