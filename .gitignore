@@ -1,0 +1,9 @@
+model/
+*.gguf
+__pycache__/
+*.pyc
+.venv/
+venv/
+results/*.json
+!results/.gitkeep
+.DS_Store

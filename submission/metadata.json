@@ -1,0 +1,37 @@
+{
+  "team_id": "TODO-your-devpost-team-id",
+  "domain": "corporate_enterprise",
+  "language_scope": ["en"],
+  "african_alpha_claim": true,
+  "budget_laptop_claim": true,
+  "submitter": {
+    "name": "Hussein Alamutu",
+    "email": "alamutuhussein@gmail.com",
+    "github_handle": "TODO-your-github-handle"
+  },
+  "cross_disciplinary_pairing": {
+    "discipline": "finance_accounting",
+    "load_bearing": true,
+    "description": "The LLM is paired with a deterministic offline finance module (double-entry ledger + mobile-money statement parser) and a local regulatory corpus (VAT/withholding-tax rules). The model interprets the operator's request and drafts documents; the finance module does the arithmetic and reconciliation and the corpus supplies citeable local-compliance answers. Neither works alone: the model gives natural-language reach, the module gives correctness the model cannot guarantee."
+  },
+  "test_prompts": [
+    {
+      "prompt_id": "p1",
+      "prompt": "TODO-representative (not cherry-picked). e.g. 'A retailer sends this M-Pesa statement excerpt: [rows]. Reconcile it against 3 unpaid invoices totalling KES 84,500 and list which invoices are now settled and the outstanding balance.'"
+    },
+    {
+      "prompt_id": "p2",
+      "prompt": "TODO-representative. e.g. 'Draft a professional quote for 12 units at KES 3,200 each with 16% VAT, 5% early-payment discount, payable via mobile money, for a Nairobi hardware shop.'"
+    }
+  ],
+  "model": {
+    "name": "TODO-after-benchmark (e.g. adtc-sme-copilot based on <base>)",
+    "runtime": "llama.cpp",
+    "quantization": "GGUF Q4_K_M",
+    "parameters_estimate": "TODO (e.g. 3.8B)",
+    "packaging": "binary_bundle"
+  },
+  "_runtime": {
+    "model_path": "model/adtc-sme-copilot-Q4_K_M.gguf"
+  }
+}
