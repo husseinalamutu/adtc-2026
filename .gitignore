@@ -12,3 +12,12 @@ results/*.json
 data/.venv/
 data/out/*.jsonl
 !data/out/.gitkeep
+
+# build pipeline (fine-tune artifacts, all regeneratable)
+build/.venv/
+build/mlx_data/
+build/adapters/
+build/fused_model/
+build/gguf/
+build/calibration_text.txt
+build/imatrix.dat

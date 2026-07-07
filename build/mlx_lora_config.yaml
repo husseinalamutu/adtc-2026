@@ -1,0 +1,35 @@
+# mlx_lm.lora config — schema is mlx_lm's own (verified against ml-explore/mlx-lm/mlx_lm/LORA.md
+# and examples/lora_config.yaml). LoRA parameters can ONLY be set here, not via CLI flags.
+# Run with: mlx_lm.lora --config mlx_lora_config.yaml
+#
+# Mirror any change here into config.yaml's summary block and into submission/metadata.json.
+
+model: "Qwen/Qwen2.5-3B-Instruct"   # TODO: replace with the benchmark winner + pin a revision in config.yaml
+train: true
+fine_tune_type: lora
+
+optimizer: adamw
+
+data: "mlx_data"   # produced by prepare_mlx_data.py — {train,valid}.jsonl in mlx_lm chat format
+
+seed: 42
+num_layers: 16       # tune up if underfitting on valid loss / holdout eval and memory allows
+batch_size: 1         # 8GB unified memory is tight — raise only if a dry run proves headroom
+iters: 1200
+val_batches: 25
+learning_rate: 1e-5
+steps_per_report: 20
+steps_per_eval: 100
+grad_accumulation_steps: 4   # effective batch size 4 without the batch=1 memory cost
+resume_adapter_file: null
+adapter_path: "adapters"
+save_every: 200
+test: false
+max_seq_length: 1024   # SME back-office prompts are short — don't pay for headroom we don't use
+grad_checkpoint: true
+
+lora_parameters:
+  keys: ["self_attn.q_proj", "self_attn.v_proj"]
+  rank: 16
+  scale: 20.0
+  dropout: 0.05
