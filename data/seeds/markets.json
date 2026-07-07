@@ -1,0 +1,72 @@
+{
+  "markets": [
+    {
+      "country": "Kenya",
+      "currency": "KES",
+      "vat_rate": 0.16,
+      "vat_name": "VAT",
+      "withholding_tax_rate": 0.05,
+      "mobile_money": ["M-Pesa"],
+      "vat_registration_threshold_local": 5000000,
+      "tax_authority": "Kenya Revenue Authority (KRA)",
+      "cities": ["Nairobi", "Mombasa", "Kisumu", "Nakuru", "Eldoret"]
+    },
+    {
+      "country": "Nigeria",
+      "currency": "NGN",
+      "vat_rate": 0.075,
+      "vat_name": "VAT",
+      "withholding_tax_rate": 0.05,
+      "mobile_money": ["OPay", "MoMo PSB", "PalmPay"],
+      "vat_registration_threshold_local": 25000000,
+      "tax_authority": "Federal Inland Revenue Service (FIRS)",
+      "cities": ["Lagos", "Abuja", "Kano", "Ibadan", "Port Harcourt"]
+    },
+    {
+      "country": "Ghana",
+      "currency": "GHS",
+      "vat_rate": 0.15,
+      "vat_name": "VAT (incl. NHIL/GETFund flat rate varies by sector)",
+      "withholding_tax_rate": 0.05,
+      "mobile_money": ["MTN MoMo", "Telecel Cash", "AirtelTigo Money"],
+      "vat_registration_threshold_local": 200000,
+      "tax_authority": "Ghana Revenue Authority (GRA)",
+      "cities": ["Accra", "Kumasi", "Takoradi", "Tamale"]
+    },
+    {
+      "country": "Uganda",
+      "currency": "UGX",
+      "vat_rate": 0.18,
+      "vat_name": "VAT",
+      "withholding_tax_rate": 0.06,
+      "mobile_money": ["MTN MoMo", "Airtel Money"],
+      "vat_registration_threshold_local": 150000000,
+      "tax_authority": "Uganda Revenue Authority (URA)",
+      "cities": ["Kampala", "Entebbe", "Jinja", "Mbarara"]
+    },
+    {
+      "country": "Tanzania",
+      "currency": "TZS",
+      "vat_rate": 0.18,
+      "vat_name": "VAT",
+      "withholding_tax_rate": 0.05,
+      "mobile_money": ["M-Pesa", "Tigo Pesa", "Airtel Money"],
+      "vat_registration_threshold_local": 100000000,
+      "tax_authority": "Tanzania Revenue Authority (TRA)",
+      "cities": ["Dar es Salaam", "Dodoma", "Arusha", "Mwanza"]
+    }
+  ],
+  "business_archetypes": [
+    {"type": "hardware shop", "items": ["cement (50kg bag)", "iron sheets", "nails (1kg)", "paint (4L)", "PVC pipe (3m)", "padlock", "wheelbarrow", "roofing screws (pack)"]},
+    {"type": "electronics retailer", "items": ["phone charger", "earphones", "power bank", "USB cable", "phone screen protector", "bluetooth speaker", "extension cable", "LED bulb"]},
+    {"type": "salon and beauty supplies", "items": ["hair relaxer kit", "wig (synthetic)", "nail polish set", "hair dryer", "styling gel", "shampoo (1L)", "hair extensions (bundle)"]},
+    {"type": "printing and stationery bureau", "items": ["ream of A4 paper", "printer cartridge", "laminating pouch (pack)", "office chair", "flash disk 32GB", "business cards (box of 250)"]},
+    {"type": "agro-input dealer", "items": ["maize seed (2kg bag)", "urea fertilizer (50kg)", "pesticide (1L)", "sprayer pump", "seedling tray", "irrigation pipe (10m)"]},
+    {"type": "fashion boutique", "items": ["ankara fabric (6 yards)", "men's shirt", "ladies' dress", "school shoes (pair)", "kitenge wrap", "leather belt"]},
+    {"type": "furniture workshop", "items": ["3-seater sofa", "dining table", "office desk", "bed frame (queen)", "bookshelf", "plastic chair (pack of 4)"]},
+    {"type": "grocery and provisions store", "items": ["cooking oil (5L)", "rice (25kg bag)", "sugar (2kg)", "wheat flour (10kg)", "bottled water (crate)", "washing powder (1kg)"]}
+  ],
+  "operator_personas": [
+    "the shop owner", "the bookkeeper", "the sole proprietor", "the shop's accounts clerk", "the business owner's daughter who now handles the books"
+  ]
+}

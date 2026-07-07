@@ -7,3 +7,8 @@ venv/
 results/*.json
 !results/.gitkeep
 .DS_Store
+
+# data pipeline
+data/.venv/
+data/out/*.jsonl
+!data/out/.gitkeep
