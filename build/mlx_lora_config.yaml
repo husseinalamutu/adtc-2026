@@ -4,7 +4,15 @@
 #
 # Mirror any change here into config.yaml's summary block and into submission/metadata.json.
 
-model: "Qwen/Qwen2.5-3B-Instruct"   # pinned revision: config.yaml base_model.hf_revision
+# TRUE QLoRA — 4-bit quantized base (local dir). CRITICAL FINDING (2026-07-08): pointing at the
+# full-precision "Qwen/Qwen2.5-3B-Instruct" loads a bf16 base = 6.17 GB of weights alone, which
+# starved this 8GB Mac (peak 6.79 GB, forced num_layers=4/seq=384, AND corrupted mlx_lm's own
+# loss/token console metrics). Switching to the pre-quantized 4-bit base dropped the base to
+# 1.74 GB and freed ~4.4 GB — which let us go to FULL quality (all 36 layers, all 7 target
+# modules, rank 32, seq 1024) at a 3.77 GB peak, and fixed the broken console metrics as a
+# side effect. Get the base with: build/download_base_4bit.sh (or hf snapshot
+# mlx-community/Qwen2.5-3B-Instruct-4bit into build/models/Qwen2.5-3B-Instruct-4bit).
+model: "models/Qwen2.5-3B-Instruct-4bit"
 train: true
 fine_tune_type: lora
 
@@ -12,38 +20,31 @@ optimizer: adamw
 
 data: "mlx_data"   # produced by prepare_mlx_data.py — {train,valid}.jsonl in mlx_lm chat format
 
-# MEMORY REALITY (measured on this M2 8GB Mac, dry-run 2026-07-08):
-#   Qwen2.5-3B QLoRA peaks ~6.35-6.79 GB. num_layers=16 OOMs during EVAL; num_layers=8 also
-#   OOMs; the settings below (num_layers=4, max_seq_length=384, grad_accum=1, rank=8) are the
-#   proven floor that actually fits. These are DELIBERATELY conservative — see the tension note.
-#
-# QUALITY TENSION: max_seq_length=384 truncates the longest ~5-10% of our examples (some hit
-#   ~550 tokens once the chat template + system prompt are added), and num_layers=4 means only
-#   4 of ~36 layers get LoRA adapters. Both materially cap fine-tune quality. Before the REAL
-#   run (task #6), decide: (a) live with this floor, (b) trade num_layers<->max_seq_length via
-#   a memory probe if any headroom exists, or (c) run the real fine-tune on a rented GPU box
-#   where none of these compromises apply. This is a strategic call flagged to the user.
-#
-# Do NOT trust mlx_lm.lora's console loss/token metrics — they're broken on this machine.
-# Monitor real training with build/check_loss_sanity.py instead (see its header).
+# MEMORY (measured on this M2 8GB Mac, 2026-07-08, with the 4-bit base + the settings below):
+#   peak 3.77 GB — ~3 GB headroom to spare. No compromises: all 36 layers adapt, no truncation.
+#   Probe method: run mlx_lora_config.probe*.yaml (short run) and read the "Peak mem" line
+#   (that reading is trustworthy even when loss/tokens aren't). Stay under ~7.0 GB peak.
 seed: 42
-num_layers: 4          # measured floor that fits; raise only after a memory probe proves headroom
+num_layers: 36         # ALL layers (Qwen2.5-3B has 36) — full-depth adaptation
 batch_size: 1
-iters: 1200
-val_batches: 10        # eval is the OOM trigger — keep this modest
+iters: 1200            # ~1.8 epochs over 2,546 train examples; watch valid loss for the sweet spot
+val_batches: 15
 learning_rate: 1e-5
 steps_per_report: 20
 steps_per_eval: 100
-grad_accumulation_steps: 1
+grad_accumulation_steps: 4   # effective batch 4 without the batch=1 activation-memory cost
 resume_adapter_file: null
 adapter_path: "adapters"
 save_every: 200
 test: false
-max_seq_length: 384    # truncates the longest few % of examples; raise toward 640 if mem allows
+max_seq_length: 1024   # full — covers our longest examples (~550 tok) with room to spare
 grad_checkpoint: true
 
 lora_parameters:
-  keys: ["self_attn.q_proj", "self_attn.v_proj"]
-  rank: 8
+  # All attention + MLP linear layers — the single biggest LoRA quality lever, and it fits.
+  # 1.94% trainable (59.9M params) vs 0.12% (3.7M) for q/v-only; cleaner valid-loss descent.
+  keys: ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj",
+         "mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"]
+  rank: 32
   scale: 20.0
   dropout: 0.05

@@ -5,20 +5,23 @@ One command should rebuild the exact submitted GGUF from the base model + datase
 
 ## Hardware reality check
 
-This Mac is an **Apple M2 with 8 GB unified memory**. That is tight for fine-tuning:
+This Mac is an **Apple M2 with 8 GB unified memory**. It comfortably does a **full-quality**
+3B QLoRA fine-tune — but ONLY because we use a genuine 4-bit base. Measured 2026-07-08:
 
-- MLX's unified-memory model + QLoRA (4-bit base, small LoRA adapters, only the adapters
-  train) is the only realistic path on this machine — full fine-tuning of a 3–4B model needs
-  far more than 8 GB.
-- Even with QLoRA, **a 4B model is risky here** (4-bit base alone is ~2.2–2.5 GB; add
-  activations, optimizer state for the adapters, tokenizer, KV cache during eval, and MLX/OS
-  overhead, and headroom gets thin at longer sequence lengths).
-- **Default to the 3B fallback** from `STRATEGY.md` §4 (Qwen-3B-class / SmolLM3-3B /
-  Llama-3.2-3B) unless `benchmark/run_baseline.sh` on the real target-class VM shows a 4B
-  model clearing ~18+ TPS *and* this Mac proves it can actually complete a LoRA run on it
-  without swapping. Test 4B only after 3B works end-to-end.
-- If training OOMs or swaps heavily: drop `--max-seq-length`, drop `--batch-size` to 1, raise
-  `--grad-checkpoint`, or reduce LoRA rank/layers before giving up on the model size.
+- **Use the 4-bit base, never the bf16 one.** Pointing `mlx_lora_config.yaml`'s `model:` at the
+  full-precision `Qwen/Qwen2.5-3B-Instruct` loads **6.17 GB of bf16 weights** (that's not QLoRA
+  — the base isn't quantized), peaks at 6.79 GB, forces `num_layers=4`/`seq=384`, AND corrupts
+  mlx_lm's own console loss/token metrics. The pre-quantized `mlx-community/Qwen2.5-3B-Instruct-4bit`
+  base is **1.74 GB** — get it via `download_base_4bit.sh`.
+- **With the 4-bit base, full quality fits at 3.77 GB peak** (~3 GB headroom): all 36 layers
+  adapt, all 7 attention+MLP LoRA target modules, rank 32, seq 1024. These winning settings are
+  already in `mlx_lora_config.yaml`. No cloud GPU needed.
+- **A 4B QLoRA base would very likely also fit locally now** (4-bit 4B ≈ 2.2–2.5 GB + our
+  ~2 GB of activations ≈ well under 8 GB). The real gate on 4B is the VM speed floor
+  (`benchmark/run_baseline.sh`, task #7), not this Mac's memory.
+- To probe headroom for any new config: run `mlx_lora_config.probe.yaml` (short run) and read the
+  `Peak mem` line — that reading is trustworthy. Stay under ~7.0 GB peak.
+- If a config ever OOMs: lower `max_seq_length`, then `num_layers`, then LoRA `rank`, in that order.
 
 ## Pipeline
 

@@ -1,0 +1,29 @@
+# MEMORY PROBE — 4-bit QLoRA base, ambitious settings. Short run (few iters + one eval, the
+# OOM trigger) purely to read the "Peak mem" line. mlx_lm.lora's loss/token metrics are broken
+# on this machine (see check_loss_sanity.py) but its Peak-mem reading is trustworthy (it matched
+# the OOM threshold in earlier bf16 runs). Target: peak < 7.0 GB (leaves ~1GB headroom on 8GB).
+model: "models/Qwen2.5-3B-Instruct-4bit"
+train: true
+fine_tune_type: lora
+optimizer: adamw
+data: "mlx_data"
+seed: 42
+num_layers: 36           # ALL layers (Qwen2.5-3B has 36) — full-depth adaptation
+batch_size: 1
+iters: 12
+val_batches: 10
+learning_rate: 1e-5
+steps_per_report: 4
+steps_per_eval: 6
+grad_accumulation_steps: 4
+resume_adapter_file: null
+adapter_path: "adapters_probe_max"
+save_every: 12
+test: false
+max_seq_length: 1024     # back to full — no truncation of our longest examples
+grad_checkpoint: true
+lora_parameters:
+  keys: ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj", "mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"]
+  rank: 32
+  scale: 20.0
+  dropout: 0.05
