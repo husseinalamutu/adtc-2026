@@ -1,29 +1,25 @@
 #!/usr/bin/env python3
 """
-Claude-teacher generator — open-ended advisory / compliance / correspondence content.
+Teacher generator — open-ended advisory / compliance / correspondence content.
 
 There's no programmatic ground truth for "explain VAT registration clearly" the way there is
-for "compute VAT on this invoice" (see templated_gen.py). So this generator uses Claude Opus
-4.8 as the teacher, but constrains it hard against hallucination: every request is grounded
-with the exact rates/thresholds/authority name from seeds/markets.json, and the model is told
-to use ONLY those supplied facts for anything statutory — not to invent citations.
+for "compute VAT on this invoice" (see templated_gen.py). So this generator uses an LLM as the
+teacher, but constrains it hard against hallucination: every request is grounded with the exact
+rates/thresholds/authority name from seeds/markets.json, and the model is told to use ONLY those
+supplied facts for anything statutory — not to invent citations.
 
-Uses the Message Batches API (50% cheaper, fine for offline dataset generation — no latency
-requirement) and structured outputs (output_config.format) so every result is valid JSON with
-no manual parsing.
+Runs on Gemini (free tier, $0 — see data/generators/_gemini_common.py for why we moved off the
+Anthropic Batches API) via a small thread pool with automatic rate-limit backoff and resumable,
+incremental writes.
 
-Requires ANTHROPIC_API_KEY (or `ant auth login`). See SKILL claude-api / python/claude-api/batches.md.
+Requires GEMINI_API_KEY — free, no card, from https://aistudio.google.com/apikey.
 """
 import argparse
 import json
-import os
 import random
-import time
 from pathlib import Path
 
-import anthropic
-from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
-from anthropic.types.messages.batch_create_params import Request
+from _gemini_common import run_batch
 
 SEEDS = json.loads((Path(__file__).parent.parent / "seeds" / "markets.json").read_text())
 # Nigeria is excluded here: it gets deep, source-grounded coverage from
@@ -59,12 +55,12 @@ RESPONSE_SCHEMA = {
         },
     },
     "required": ["question", "answer"],
-    "additionalProperties": False,
 }
 
 SYSTEM = """You write training examples for a back-office assistant used by African SME
 operators (shop owners, bookkeepers) on an offline laptop app. For each request you are given
-a business context and a topic. Produce ONE realistic operator question and ONE accurate answer.
+a business context and a topic. Produce ONE realistic operator question and ONE accurate answer,
+as a JSON object with keys "question" and "answer".
 
 Hard rules:
 - Use ONLY the specific facts given to you (tax rates, thresholds, authority name) for anything
@@ -76,17 +72,15 @@ Hard rules:
 - The question should sound like something typed by a real operator, not a textbook prompt."""
 
 
-def build_requests(n: int, seed: int) -> tuple[list[Request], dict[str, str]]:
+def build_requests(n: int, seed: int) -> list[tuple[str, str, str, dict]]:
     rng = random.Random(seed)
-    requests = []
-    scenario_families: dict[str, str] = {}
+    out = []
     for i in range(n):
         market = rng.choice(MARKETS)
         archetype = rng.choice(ARCHETYPES)
         persona = rng.choice(PERSONAS)
         topic = rng.choice(TOPICS)
         custom_id = f"teacher-{i:05d}"
-        scenario_families[custom_id] = f"advisory::{topic}"
 
         facts = (
             f"Country: {market['country']}. Business: a {archetype['type']}. "
@@ -98,20 +92,9 @@ def build_requests(n: int, seed: int) -> tuple[list[Request], dict[str, str]]:
             f"Common mobile-money provider used: {rng.choice(market['mobile_money'])}."
         )
         user_prompt = f"Facts:\n{facts}\n\nTopic to cover: {topic}\n\nGenerate the question+answer pair now."
-
-        requests.append(
-            Request(
-                custom_id=custom_id,
-                params=MessageCreateParamsNonStreaming(
-                    model="claude-opus-4-8",
-                    max_tokens=1024,
-                    system=SYSTEM,
-                    messages=[{"role": "user", "content": user_prompt}],
-                    output_config={"format": {"type": "json_schema", "schema": RESPONSE_SCHEMA}},
-                ),
-            )
-        )
-    return requests, scenario_families
+        scenario_family = f"advisory::{topic}"
+        out.append((custom_id, SYSTEM, user_prompt, RESPONSE_SCHEMA, scenario_family))
+    return out
 
 
 def main():
@@ -119,58 +102,29 @@ def main():
     ap.add_argument("--n", type=int, default=800)
     ap.add_argument("--out", default="out/teacher.jsonl")
     ap.add_argument("--seed", type=int, default=7)
-    ap.add_argument("--poll-interval", type=int, default=30)
     args = ap.parse_args()
 
-    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
-        print("No ANTHROPIC_API_KEY/ANTHROPIC_AUTH_TOKEN set — run `ant auth login` or export a key.")
-        return
+    reqs = build_requests(args.n, args.seed)
+    scenario_families = {r[0]: r[4] for r in reqs}
 
-    client = anthropic.Anthropic()
-    requests, scenario_families = build_requests(args.n, args.seed)
+    def build_example(custom_id: str, parsed: dict) -> dict | None:
+        question, answer = parsed.get("question"), parsed.get("answer")
+        if not question or not answer:
+            return None
+        return {
+            "id": custom_id,
+            "category": "advisory",
+            "scenario_family": scenario_families.get(custom_id, "advisory::unknown"),
+            "messages": [{"role": "user", "content": question}, {"role": "assistant", "content": answer}],
+            "ground_truth": None,
+        }
 
-    print(f"Submitting batch of {len(requests)} requests...")
-    batch = client.messages.batches.create(requests=requests)
-    print(f"Batch {batch.id} — status: {batch.processing_status}")
-
-    while True:
-        batch = client.messages.batches.retrieve(batch.id)
-        if batch.processing_status == "ended":
-            break
-        print(f"  ...{batch.processing_status} (processing: {batch.request_counts.processing})")
-        time.sleep(args.poll_interval)
-
-    print(f"Done. succeeded={batch.request_counts.succeeded} errored={batch.request_counts.errored}")
-
-    out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    written = 0
-    with out_path.open("w") as f:
-        for result in client.messages.batches.results(batch.id):
-            if result.result.type != "succeeded":
-                continue
-            msg = result.result.message
-            text = next((b.text for b in msg.content if b.type == "text"), None)
-            if not text:
-                continue
-            try:
-                parsed = json.loads(text)
-            except json.JSONDecodeError:
-                continue
-            question, answer = parsed.get("question"), parsed.get("answer")
-            if not question or not answer:
-                continue
-            example = {
-                "id": result.custom_id,
-                "category": "advisory",
-                "scenario_family": scenario_families.get(result.custom_id, "advisory::unknown"),
-                "messages": [{"role": "user", "content": question}, {"role": "assistant", "content": answer}],
-                "ground_truth": None,
-            }
-            f.write(json.dumps(example, ensure_ascii=False) + "\n")
-            written += 1
-
-    print(f"Wrote {written} teacher examples -> {out_path}")
+    print(f"Generating {len(reqs)} advisory examples via Gemini...")
+    run_batch(
+        [(cid, sys_, usr, schema) for cid, sys_, usr, schema, _ in reqs],
+        build_example,
+        Path(args.out),
+    )
 
 
 if __name__ == "__main__":

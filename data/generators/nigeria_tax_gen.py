@@ -15,19 +15,15 @@ templated_gen.py, just applied to legal facts instead of arithmetic: the facts a
 before the model ever runs, so the model's job is phrasing and business-context framing,
 not sourcing the numbers.
 
-Uses the Message Batches API + structured outputs. Requires ANTHROPIC_API_KEY (or
-`ant auth login`).
+Runs on Gemini (free tier, $0 — see data/generators/_gemini_common.py). Requires
+GEMINI_API_KEY — free, no card, from https://aistudio.google.com/apikey.
 """
 import argparse
 import json
-import os
 import random
-import time
 from pathlib import Path
 
-import anthropic
-from anthropic.types.message_create_params import MessageCreateParamsNonStreaming
-from anthropic.types.messages.batch_create_params import Request
+from _gemini_common import run_batch
 
 DATA_DIR = Path(__file__).parent.parent
 FACTS = json.loads((DATA_DIR / "seeds" / "nigeria_tax_facts.json").read_text())
@@ -71,14 +67,14 @@ RESPONSE_SCHEMA = {
         },
     },
     "required": ["question", "answer"],
-    "additionalProperties": False,
 }
 
 SYSTEM = """You write training examples for an offline back-office assistant used by
 Nigerian SME operators and by Nigerians in the diaspora, grounded in the Nigeria Tax
 Reform Acts 2025 (effective 2026-01-01).
 
-You are given a JSON fact block for ONE topic. Hard rules:
+You are given a JSON fact block for ONE topic. Produce a JSON object with keys "question"
+and "answer". Hard rules:
 - State ONLY numbers/rates/thresholds/deadlines that appear in the given fact block. Never
   add a figure from general knowledge, even if you believe it's correct — the fact block is
   the single source of truth for this exercise.
@@ -100,17 +96,16 @@ def get_fact(path: str) -> dict:
     return node
 
 
-def build_requests(n: int, seed: int) -> tuple[list[Request], dict[str, str]]:
+def build_requests(n: int, seed: int) -> list[tuple[str, str, str, dict, str]]:
     rng = random.Random(seed)
-    requests = []
-    scenario_families: dict[str, str] = {}
+    out = []
 
     for i in range(n):
         is_diaspora = rng.random() < 0.25
         if is_diaspora:
             topic_label, fact_path = rng.choice(DIASPORA_TOPICS)
-            archetype = None
             persona = rng.choice(["a Nigerian working abroad", "a diaspora Nigerian sending money home monthly", "a Nigerian who just moved abroad for work"])
+            archetype = None
         else:
             topic_label, fact_path = rng.choice(FACT_TOPICS)
             archetype = rng.choice(ARCHETYPES)
@@ -118,7 +113,7 @@ def build_requests(n: int, seed: int) -> tuple[list[Request], dict[str, str]]:
 
         city = rng.choice(NIGERIA_CITIES)
         custom_id = f"nga-{i:05d}"
-        scenario_families[custom_id] = f"nigeria_tax::{fact_path.split('.')[0]}"
+        scenario_family = f"nigeria_tax::{fact_path.split('.')[0]}"
 
         fact_block = get_fact(fact_path)
         context = (
@@ -131,20 +126,8 @@ def build_requests(n: int, seed: int) -> tuple[list[Request], dict[str, str]]:
             f"Fact block (source of truth — cite nothing outside this):\n{json.dumps(fact_block, indent=2)}\n\n"
             f"Generate the question+answer pair now."
         )
-
-        requests.append(
-            Request(
-                custom_id=custom_id,
-                params=MessageCreateParamsNonStreaming(
-                    model="claude-opus-4-8",
-                    max_tokens=1024,
-                    system=SYSTEM,
-                    messages=[{"role": "user", "content": user_prompt}],
-                    output_config={"format": {"type": "json_schema", "schema": RESPONSE_SCHEMA}},
-                ),
-            )
-        )
-    return requests, scenario_families
+        out.append((custom_id, SYSTEM, user_prompt, RESPONSE_SCHEMA, scenario_family))
+    return out
 
 
 def main():
@@ -152,58 +135,29 @@ def main():
     ap.add_argument("--n", type=int, default=600)
     ap.add_argument("--out", default="out/nigeria_tax.jsonl")
     ap.add_argument("--seed", type=int, default=11)
-    ap.add_argument("--poll-interval", type=int, default=30)
     args = ap.parse_args()
 
-    if not (os.environ.get("ANTHROPIC_API_KEY") or os.environ.get("ANTHROPIC_AUTH_TOKEN")):
-        print("No ANTHROPIC_API_KEY/ANTHROPIC_AUTH_TOKEN set — run `ant auth login` or export a key.")
-        return
+    reqs = build_requests(args.n, args.seed)
+    scenario_families = {r[0]: r[4] for r in reqs}
 
-    client = anthropic.Anthropic()
-    requests, scenario_families = build_requests(args.n, args.seed)
+    def build_example(custom_id: str, parsed: dict) -> dict | None:
+        question, answer = parsed.get("question"), parsed.get("answer")
+        if not question or not answer:
+            return None
+        return {
+            "id": custom_id,
+            "category": "nigeria_tax",
+            "scenario_family": scenario_families.get(custom_id, "nigeria_tax::unknown"),
+            "messages": [{"role": "user", "content": question}, {"role": "assistant", "content": answer}],
+            "ground_truth": None,
+        }
 
-    print(f"Submitting batch of {len(requests)} requests...")
-    batch = client.messages.batches.create(requests=requests)
-    print(f"Batch {batch.id} — status: {batch.processing_status}")
-
-    while True:
-        batch = client.messages.batches.retrieve(batch.id)
-        if batch.processing_status == "ended":
-            break
-        print(f"  ...{batch.processing_status} (processing: {batch.request_counts.processing})")
-        time.sleep(args.poll_interval)
-
-    print(f"Done. succeeded={batch.request_counts.succeeded} errored={batch.request_counts.errored}")
-
-    out_path = Path(args.out)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    written = 0
-    with out_path.open("w") as f:
-        for result in client.messages.batches.results(batch.id):
-            if result.result.type != "succeeded":
-                continue
-            msg = result.result.message
-            text = next((b.text for b in msg.content if b.type == "text"), None)
-            if not text:
-                continue
-            try:
-                parsed = json.loads(text)
-            except json.JSONDecodeError:
-                continue
-            question, answer = parsed.get("question"), parsed.get("answer")
-            if not question or not answer:
-                continue
-            example = {
-                "id": result.custom_id,
-                "category": "nigeria_tax",
-                "scenario_family": scenario_families.get(result.custom_id, "nigeria_tax::unknown"),
-                "messages": [{"role": "user", "content": question}, {"role": "assistant", "content": answer}],
-                "ground_truth": None,
-            }
-            f.write(json.dumps(example, ensure_ascii=False) + "\n")
-            written += 1
-
-    print(f"Wrote {written} Nigeria tax examples -> {out_path}")
+    print(f"Generating {len(reqs)} Nigeria-tax examples via Gemini...")
+    run_batch(
+        [(cid, sys_, usr, schema) for cid, sys_, usr, schema, _ in reqs],
+        build_example,
+        Path(args.out),
+    )
 
 
 if __name__ == "__main__":

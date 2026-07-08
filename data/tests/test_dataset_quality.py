@@ -133,10 +133,14 @@ class TestNigeriaTaxFactGrounding:
             nigeria_tax_gen.get_fact(path)  # raises KeyError if broken
 
     def test_build_requests_dry_run(self):
-        reqs, families = nigeria_tax_gen.build_requests(30, seed=1)
+        # (custom_id, system, user_prompt, schema, scenario_family) tuples — see
+        # generators/nigeria_tax_gen.py / _gemini_common.py for why this shape.
+        reqs = nigeria_tax_gen.build_requests(30, seed=1)
         assert len(reqs) == 30
-        assert len(families) == 30
-        assert all(f.startswith("nigeria_tax::") for f in families.values())
+        custom_ids = [r[0] for r in reqs]
+        assert len(set(custom_ids)) == 30, "custom_ids must be unique"
+        families = [r[4] for r in reqs]
+        assert all(f.startswith("nigeria_tax::") for f in families)
 
     def test_no_fact_marked_unconfirmed_is_used_without_a_confidence_tag(self):
         """Every leaf fact dict passed to the model must carry a confidence tag, or the

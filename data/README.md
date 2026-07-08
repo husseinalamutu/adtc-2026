@@ -26,11 +26,14 @@ everywhere. We went **layered** instead:
 | Generator | Covers | Ground truth |
 |---|---|---|
 | `generators/templated_gen.py` | Invoices, quotes, mobile-money (M-Pesa/MoMo) reconciliation, multi-currency, VAT math | **Programmatically computed** — deterministic, free, unit-testable. This is the arithmetic backbone. |
-| `generators/claude_teacher_gen.py` | Open-ended advisory for Kenya/Ghana/Uganda/Tanzania (Nigeria excluded — see below) | **Claude Opus 4.8** (structured output, batched). |
-| `generators/nigeria_tax_gen.py` | Deep Nigeria compliance: CIT/VAT/WHT/CGT/PIT/Development Levy, filing deadlines, penalties, diaspora tax-residency rules | **Claude Opus 4.8, grounded in `seeds/nigeria_tax_facts.json`** — a hand-curated, confidence-tagged fact table extracted from the primary Acts. The model is contractually forbidden (via system prompt + a test) from stating any number not in that file. |
+| `generators/claude_teacher_gen.py` | Open-ended advisory for Kenya/Ghana/Uganda/Tanzania (Nigeria excluded — see below) | **Gemini (free tier, $0)**, structured JSON output, threaded with retry/backoff. |
+| `generators/nigeria_tax_gen.py` | Deep Nigeria compliance: CIT/VAT/WHT/CGT/PIT/Development Levy, filing deadlines, penalties, diaspora tax-residency rules | **Gemini, grounded in `seeds/nigeria_tax_facts.json`** — a hand-curated, confidence-tagged fact table extracted from the primary Acts. The model is instructed (system prompt) and test-checked to never state a number not in that file. |
 
-Never invert the templated/teacher split — don't ask Claude to do the arithmetic (it will
-occasionally get it wrong and you'd be baking errors into training data), and don't
+(Despite the filename, `claude_teacher_gen.py` now calls Gemini, not Claude — moved 2026-07-08
+purely to make dataset generation free; see `generators/_gemini_common.py` header for why.)
+
+Never invert the templated/teacher split — don't ask the teacher model to do the arithmetic (it
+will occasionally get it wrong and you'd be baking errors into training data), and don't
 hand-template the advisory content (it reads robotic and won't generalize to the 2 hidden
 judge prompts).
 
@@ -80,13 +83,18 @@ seeds/*.json  →  generators/*.py  →  build_dataset.py  →  out/{train,holdo
 
 ```bash
 pip install -r requirements.txt
+export GEMINI_API_KEY=your-key-here   # free, no card: https://aistudio.google.com/apikey
 python generators/templated_gen.py --n 4000 --out out/templated.jsonl
-python generators/claude_teacher_gen.py --n 800 --out out/teacher.jsonl        # needs ANTHROPIC_API_KEY
-python generators/nigeria_tax_gen.py --n 600 --out out/nigeria_tax.jsonl      # needs ANTHROPIC_API_KEY
+python generators/claude_teacher_gen.py --n 800 --out out/teacher.jsonl
+python generators/nigeria_tax_gen.py --n 600 --out out/nigeria_tax.jsonl
 python build_dataset.py --inputs out/templated.jsonl out/teacher.jsonl out/nigeria_tax.jsonl --out-dir out
 pytest tests/ -v
 ```
 
 `nigeria_tax_gen.py`'s fact-path validation (`TestNigeriaTaxFactGrounding` in `tests/`) needs
 **no API key** — run `pytest tests/ -v -k Nigeria` first to catch a broken fact reference before
-spending any batch budget.
+spending any generation time.
+
+Both generator scripts write incrementally and resume automatically — if a run is interrupted
+(rate limit, network blip, killed process), just re-run the same command; already-written
+examples are skipped and only the remainder is generated.
