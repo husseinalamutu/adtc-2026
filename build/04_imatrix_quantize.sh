@@ -25,8 +25,14 @@ fi
 echo "==> Building calibration text from data/out/train.jsonl ($N_SAMPLES samples)"
 python3 make_calibration_text.py --n "$N_SAMPLES"
 
-echo "==> Computing imatrix (this can take a while on CPU/Metal for f16)"
-"$IMATRIX_BIN" -m "$F16_MODEL" -f calibration_text.txt -o imatrix.dat
+echo "==> Computing imatrix (CPU-only; f16 is 6.2GB and Metal OOMs on an 8GB Mac)"
+# -ngl 0 forces CPU: our local llama.cpp is a Metal build, and loading the 6.2GB f16 model into
+# the GPU working set + batch activations exceeds 8GB unified memory (confirmed OOM 2026-07-08:
+# "Insufficient Memory kIOGPUCommandBufferCallbackErrorOutOfMemory"). CPU is slower but safe.
+# Small -b/-ub keeps CPU-side activation buffers modest. On the TARGET-CLASS x86 VM this step
+# runs on CPU anyway (no Metal), so these flags are harmless there.
+"$IMATRIX_BIN" -m "$F16_MODEL" -f calibration_text.txt -o imatrix.dat \
+  -ngl 0 -c 512 -b 512 -ub 128 -t 4
 
 echo "==> Quantizing to $QUANT_TYPE with imatrix"
 mkdir -p gguf

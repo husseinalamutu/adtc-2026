@@ -24,7 +24,11 @@ for p in "${PROMPTS[@]}"; do
   echo "=================================================================="
   echo "PROMPT: $p"
   echo "------------------------------------------------------------------"
-  "$CLI" -m "$MODEL" -t 4 -c 2048 -n 300 -p "$p" --no-warmup 2>/dev/null
+  # -no-cnv + -st: this llama.cpp build (b9913+) defaults -p into INTERACTIVE conversation mode
+  # and then blocks at a `>` prompt waiting for input (hangs the script). -no-cnv forces
+  # non-conversation single-shot; -st single-turn exits after one response. The chat template is
+  # still applied so the instruct model answers properly.
+  "$CLI" -m "$MODEL" -t 4 -c 2048 -n 300 -no-cnv -st -p "$p" --no-warmup 2>/dev/null
   echo
 done
 

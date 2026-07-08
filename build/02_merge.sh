@@ -16,9 +16,16 @@ if [ ! -d "$ADAPTER_PATH" ]; then
 fi
 
 echo "==> Fusing LoRA adapters ($ADAPTER_PATH) into $MODEL"
+# --dequantize is MANDATORY: our base is a 4-bit MLX model. Without it, mlx_lm.fuse fuses the
+# adapter into the STILL-4-bit weights (U32-packed + .scales/.biases tensors), and
+# convert_hf_to_gguf.py (03) cannot read MLX's quantization format — it needs plain fp16.
+# With --dequantize we get a clean ~6.2GB fp16 HF model (verified 2026-07-08: 0 residual quant
+# tensors, no 'quantization' key), which then goes GGUF f16 -> imatrix -> Q4_K_M. Confirmed the
+# bug the hard way during the pipeline-validation run — do not drop this flag.
 mlx_lm.fuse \
   --model "$MODEL" \
   --adapter-path "$ADAPTER_PATH" \
+  --dequantize \
   --save-path fused_model
 
 echo
