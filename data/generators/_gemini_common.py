@@ -1,18 +1,20 @@
 """
-Shared Gemini calling helper for claude_teacher_gen.py and nigeria_tax_gen.py.
+Shared free-tier LLM calling helper for claude_teacher_gen.py and nigeria_tax_gen.py.
 
-Switched from the Anthropic Batches API to Gemini (2026-07-08) so dataset generation costs
-$0 — see STRATEGY.md / data/README.md for why. No batch endpoint on Gemini's free tier, so
-this runs requests through a small thread pool instead, with:
-  - automatic exponential-backoff retry on 429 (rate limit) and transient 5xx errors, since
-    Google's free-tier RPM/RPD are account-specific (shown in AI Studio, not fixed published
-    numbers) — rather than guess a number and hardcode a sleep, we just back off on real 429s.
-  - incremental, resumable writes: each result is appended to --out as soon as it succeeds, and
-    already-written custom_ids are skipped on a re-run. A killed/interrupted run loses at most
-    the in-flight requests, not prior progress.
+Generates training data for $0 across two free providers (see data/README.md for why we moved
+off the Anthropic Batches API). Provider is chosen by GENERATION_PROVIDER=gemini|groq:
+  - gemini (google-genai): free but the 2026 free tier is very tight (~5 req/min per model,
+    per-MINUTE reset, and a low daily cap). We round-robin flash models to stretch it.
+  - groq: separate free quota pool (a whole different account/key). llama-3.1-8b-instant in
+    particular has a high daily token budget (~500K/day). Round-robin 8b + 70b for volume.
 
-Install: pip install google-genai
-Auth: export GEMINI_API_KEY=... (from https://aistudio.google.com/apikey, free, no card)
+Both providers share: a single paced worker (bursting just thrashes a per-minute quota),
+retry that honors the API's own retry delay, and incremental+resumable writes (each success is
+appended immediately; already-written custom_ids are skipped on re-run). When one provider's
+daily quota is spent, switch GENERATION_PROVIDER and re-run — it resumes on the remainder.
+
+Install: pip install google-genai groq
+Auth: GEMINI_API_KEY (aistudio.google.com/apikey) and/or GROQ_API_KEY (console.groq.com/keys).
 """
 from __future__ import annotations
 
@@ -24,17 +26,25 @@ import time
 from pathlib import Path
 from typing import Callable
 
-# Free-tier quota is PER-MODEL (confirmed 2026-07-08), and each model's sustainable free rate is
-# only ~5 req/min (measured — the 2026 free tier is tighter than older docs claim). So we
-# ROUND-ROBIN across several current-gen flash models to multiply the free budget, and pace the
-# combined stream just under the sum of their per-model limits. 2.5-flash is the quality tier;
-# 2.5-flash-lite is slightly weaker but fine for advisory prose. Override with GEMINI_MODELS
-# (comma-separated) / GEMINI_RPM_PER_MODEL if your account has different quota.
+PROVIDER = os.environ.get("GENERATION_PROVIDER", "gemini").strip().lower()
+
+# Per-provider model rotations. Free quota is PER-MODEL, so round-robin multiplies the budget.
+_DEFAULT_MODELS = {
+    # gemini: 2.0-* family is daily-exhausted; a throttled model in rotation is WORSE than
+    # excluding it (each request burns a full ~57s retryDelay). Keep only live models.
+    "gemini": "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-flash-lite-latest",
+    # groq: 8b-instant has a much higher daily token cap than 70b; both are fine for grounded
+    # phrasing (the facts are fixed — the model only phrases them).
+    "groq": "llama-3.1-8b-instant,llama-3.3-70b-versatile",
+}
 MODELS = [m.strip() for m in os.environ.get(
-    "GEMINI_MODELS", "gemini-2.5-flash,gemini-2.5-flash-lite,gemini-2.0-flash,gemini-2.0-flash-lite"
+    "GEN_MODELS", _DEFAULT_MODELS.get(PROVIDER, _DEFAULT_MODELS["gemini"])
 ).split(",") if m.strip()]
-RPM_PER_MODEL = float(os.environ.get("GEMINI_RPM_PER_MODEL", "4.5"))  # just under the ~5/min real limit
-TARGET_RPM = RPM_PER_MODEL * len(MODELS)  # combined stream rate across all models
+
+# Combined target request rate. Gemini free is ~5/min per model; Groq free allows a higher RPM
+# (~30) but a tight per-minute TPM — pace conservatively and let retry-on-429 self-regulate.
+_RPM_PER_MODEL = float(os.environ.get("GEN_RPM_PER_MODEL", "4" if PROVIDER == "gemini" else "8"))
+TARGET_RPM = _RPM_PER_MODEL * len(MODELS)
 MAX_RETRIES = 8
 
 
@@ -58,57 +68,70 @@ class _Pacer:
 
 
 def _client():
+    if PROVIDER == "groq":
+        if not os.environ.get("GROQ_API_KEY"):
+            raise SystemExit("No GROQ_API_KEY set. Get a free key at https://console.groq.com/keys")
+        from groq import Groq  # lazy import so --help works without the package
+        return Groq()
     if not os.environ.get("GEMINI_API_KEY"):
         raise SystemExit(
             "No GEMINI_API_KEY set. Get a free key (no card) at "
-            "https://aistudio.google.com/apikey, then:\n"
-            "  export GEMINI_API_KEY=your-key-here"
+            "https://aistudio.google.com/apikey, then: export GEMINI_API_KEY=your-key-here"
         )
-    from google import genai  # imported lazily so --help works without the package installed
+    from google import genai
     return genai.Client()
 
 
 def _retry_delay_from(msg: str) -> float | None:
-    """Gemini's 429 body includes the exact reset time, e.g. "retryDelay: 39s". Honor it
-    instead of guessing a backoff — it tells us precisely when the per-minute quota resets."""
-    m = re.search(r"retryDelay['\"]?:?\s*['\"]?(\d+)s", msg)
+    """Both providers put the reset time in the 429 body — Gemini "retryDelay: 39s",
+    Groq "try again in 12.5s". Honor it instead of guessing a backoff."""
+    m = re.search(r"retryDelay['\"]?:?\s*['\"]?([\d.]+)s", msg) or re.search(r"try again in ([\d.]+)s", msg)
     return float(m.group(1)) if m else None
 
 
-def generate_structured(client, model: str, system: str, user_prompt: str, schema: dict, pacer: "_Pacer") -> dict | None:
-    """One Gemini call to `model`, constrained to the given JSON schema, paced + retried.
-    Returns the parsed dict, or None if every retry failed (caller skips that example rather
-    than crash the run — resumable, so it can be picked up on a later re-run).
-
-    Uses client.models.generate_content with a JSON-schema config. NOTE: the current Gemini
-    docs show a newer client.interactions.create(..., response_format=...) surface, but that
-    path HANGS in google-genai 2.10.0 (verified 2026-07-08 — timed out at 2 min while
-    generate_content returned in 2s). Stick with generate_content until interactions is stable."""
+def _call_gemini(client, model, system, user_prompt, schema):
+    # generate_content with JSON-schema config. NOTE: the docs' newer client.interactions.create
+    # surface HANGS in google-genai 2.10.0 (verified 2026-07-08) — stick with generate_content.
     from google.genai import types
-    config = types.GenerateContentConfig(
-        system_instruction=system,
-        response_mime_type="application/json",
-        response_schema=schema,
+    resp = client.models.generate_content(
+        model=model, contents=user_prompt,
+        config=types.GenerateContentConfig(
+            system_instruction=system, response_mime_type="application/json", response_schema=schema),
     )
+    return json.loads(resp.text)
+
+
+def _call_groq(client, model, system, user_prompt, schema):
+    # Groq is OpenAI-compatible; JSON mode = response_format {"type":"json_object"}. The schema
+    # is enforced via the system prompt (which already instructs the exact keys). Verified
+    # 2026-07-08: llama-3.3-70b returns clean, correctly-grounded JSON in ~1s.
+    resp = client.chat.completions.create(
+        model=model, max_tokens=800,
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": user_prompt}],
+        response_format={"type": "json_object"},
+    )
+    return json.loads(resp.choices[0].message.content)
+
+
+def generate_structured(client, model: str, system: str, user_prompt: str, schema: dict, pacer: "_Pacer") -> dict | None:
+    """One paced+retried call to `model`, constrained to the JSON schema. Returns the parsed
+    dict, or None if every retry failed (caller skips it — resumable, so a later re-run retries).
+    Dispatches to the Gemini or Groq backend based on GENERATION_PROVIDER."""
+    call = _call_groq if PROVIDER == "groq" else _call_gemini
     for attempt in range(MAX_RETRIES):
         pacer.wait()  # steady drip under the combined per-minute quota
         try:
-            resp = client.models.generate_content(model=model, contents=user_prompt, config=config)
-            return json.loads(resp.text)
+            return call(client, model, system, user_prompt, schema)
         except json.JSONDecodeError:
             return None  # model didn't return valid JSON this time — skip, don't retry-loop forever
-        except Exception as e:  # noqa: BLE001 — genuinely want to retry on any transient API error
+        except Exception as e:  # noqa: BLE001 — retry on any transient API error
             msg = str(e)
-            is_rate_limit = "429" in msg or "RESOURCE_EXHAUSTED" in msg
+            is_rate_limit = "429" in msg or "RESOURCE_EXHAUSTED" in msg or "rate_limit" in msg.lower()
             is_transient = is_rate_limit or "500" in msg or "503" in msg or "UNAVAILABLE" in msg
             if not is_transient or attempt == MAX_RETRIES - 1:
-                print(f"  [gemini error, giving up] {msg[:160]}")
+                print(f"  [{PROVIDER} error, giving up] {msg[:160]}", flush=True)
                 return None
-            if is_rate_limit:
-                # Honor the API's own retryDelay (its precise reset), + a small cushion.
-                delay = (_retry_delay_from(msg) or 30) + 2
-            else:
-                delay = min(30, 2 ** attempt)
+            delay = ((_retry_delay_from(msg) or 30) + 2) if is_rate_limit else min(30, 2 ** attempt)
             time.sleep(delay)
     return None
 

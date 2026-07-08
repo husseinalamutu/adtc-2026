@@ -119,7 +119,7 @@ def main():
             "ground_truth": None,
         }
 
-    print(f"Generating {len(reqs)} advisory examples via Gemini...")
+    print(f"Generating {len(reqs)} advisory examples ...")
     run_batch(
         [(cid, sys_, usr, schema) for cid, sys_, usr, schema, _ in reqs],
         build_example,
