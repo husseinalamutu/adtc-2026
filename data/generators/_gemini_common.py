@@ -43,20 +43,22 @@ def _client():
 def generate_structured(client, system: str, user_prompt: str, schema: dict) -> dict | None:
     """One Gemini call constrained to the given JSON schema, with retry/backoff.
     Returns the parsed dict, or None if every retry failed (caller should skip that example
-    rather than crash the whole run — a few dropped examples out of a few thousand is fine)."""
-    full_input = f"{system}\n\n{user_prompt}"
+    rather than crash the whole run — a few dropped examples out of a few thousand is fine).
+
+    Uses client.models.generate_content with a JSON-schema config. NOTE: the current Gemini
+    docs show a newer client.interactions.create(..., response_format=...) surface, but that
+    path HANGS in google-genai 2.10.0 (verified 2026-07-08 — it timed out at 2 min while
+    generate_content returned in 2s). Stick with generate_content until interactions is stable."""
+    from google.genai import types
+    config = types.GenerateContentConfig(
+        system_instruction=system,
+        response_mime_type="application/json",
+        response_schema=schema,
+    )
     for attempt in range(MAX_RETRIES):
         try:
-            interaction = client.interactions.create(
-                model=MODEL,
-                input=full_input,
-                response_format={
-                    "type": "text",
-                    "mime_type": "application/json",
-                    "schema": schema,
-                },
-            )
-            return json.loads(interaction.output_text)
+            resp = client.models.generate_content(model=MODEL, contents=user_prompt, config=config)
+            return json.loads(resp.text)
         except json.JSONDecodeError:
             return None  # model didn't return valid JSON this time — skip, don't retry-loop forever
         except Exception as e:  # noqa: BLE001 — genuinely want to retry on any transient API error

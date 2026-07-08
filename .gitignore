@@ -25,3 +25,5 @@ artifacts/
 build/models/
 build/fused_model/
 build/adapters_*/
+.env
+**/.env
