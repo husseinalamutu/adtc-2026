@@ -6,8 +6,8 @@
 
 base_model:
   # Must match mlx_lora_config.yaml's `model` field exactly.
-  hf_repo: "Qwen/Qwen2.5-3B-Instruct"   # placeholder — replace after benchmark/run_baseline.sh
-  hf_revision: "TODO-pin-a-commit-sha"
+  hf_repo: "Qwen/Qwen2.5-3B-Instruct"
+  hf_revision: "aa8e72537993ba99e69dfaafa59ed015b17504d1"   # pinned 2026-07-07 via HF API
   family_fallback_note: "3B is the safe default given this Mac's 8GB unified memory (see build/README.md). Only move to a 4B model after both the VM speed floor AND a local training dry-run confirm it fits."
 
 quantization:
@@ -21,6 +21,6 @@ runtime:
   model_path: "model/adtc-sme-copilot-Q4_K_M.gguf"
 
 llamacpp:
-  # Pin this once infra/provision_benchmark_vm.sh's LLAMACPP_COMMIT is set — must match,
-  # or local conversion/quant behavior can drift from the audited build.
-  commit: "TODO-pin-same-sha-as-infra/provision_benchmark_vm.sh"
+  # Matches infra/provision_benchmark_vm.sh's LLAMACPP_COMMIT and docker/Dockerfile's
+  # built binary (confirmed via `llama-cli --version` -> "bec4772" after the docker build).
+  commit: "bec4772f6a2527d371557b5d2032641e5ff7619c"

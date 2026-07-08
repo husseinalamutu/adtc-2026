@@ -3,9 +3,16 @@
 # Idempotent-ish: safe to re-run. Run as root (or with sudo) on a FRESH VM.
 set -euo pipefail
 
-# --- PIN THIS to the llama.cpp revision the adtc-profiler expects. ---
-# Check the profiler repo (pyproject/README) and set the exact commit before trusting numbers.
-LLAMACPP_COMMIT="${LLAMACPP_COMMIT:-master}"   # TODO: replace 'master' with a real 40-char SHA.
+# --- llama.cpp revision ---
+# CONFIRMED (2026-07-07, read directly from the profiler's Dockerfile source): the official
+# build itself defaults to `ARG LLAMACPP_REF=master` — there is NO pinned commit upstream.
+# This is a real reproducibility gap on the organizers' side (master moves), not something
+# we can fully close ourselves. Mitigate it: pin to a specific commit ourselves, matching
+# build/config.yaml and docker/Dockerfile's verified build (`llama-cli --version` -> "bec4772").
+# Re-pin + re-benchmark shortly before Gate 1 submission so this reflects a recent master,
+# not a stale one — check `git log --oneline -1 origin/master` on the VM before assuming this
+# SHA is still current.
+LLAMACPP_COMMIT="${LLAMACPP_COMMIT:-bec4772f6a2527d371557b5d2032641e5ff7619c}"
 
 echo "==> System deps"
 export DEBIAN_FRONTEND=noninteractive
@@ -30,9 +37,25 @@ if [ ! -d llama.cpp ]; then git clone --quiet https://github.com/ggml-org/llama.
 cd llama.cpp
 git fetch --quiet --all
 git checkout --quiet "${LLAMACPP_COMMIT}"
-# CPU-only, no GPU backends. -DGGML_NATIVE=ON uses the box's own ISA (matches how the audit box runs).
-cmake -S . -B build -DGGML_NATIVE=ON -DGGML_CUDA=OFF -DGGML_METAL=OFF -DLLAMA_CURL=ON >/dev/null
-cmake --build build -j"$CPUS" --config Release >/dev/null
+# CRITICAL: these flags are copied VERBATIM from the official adtc-profiler Dockerfile
+# (github.com/Africa-Deep-Tech-Foundation/adtc-profiler, profiler/Dockerfile, stage 1).
+# The audit deliberately builds with GGML_NATIVE=OFF and every SIMD extension disabled —
+# a lowest-common-denominator CPU baseline, NOT the VM's native instruction set. Building
+# with GGML_NATIVE=ON (as an earlier version of this script did) produces a FASTER binary
+# than the audit uses, which would silently overstate our TPS margin. Do not "optimize"
+# this build — matching the audit exactly is the entire point of this VM.
+cmake -S . -B build \
+  -DBUILD_SHARED_LIBS=OFF \
+  -DGGML_NATIVE=OFF \
+  -DGGML_AVX=OFF \
+  -DGGML_AVX2=OFF \
+  -DGGML_AVX512=OFF \
+  -DGGML_FMA=OFF \
+  -DGGML_F16C=OFF \
+  -DGGML_BLAS=OFF \
+  -DGGML_CUDA=OFF \
+  -DGGML_METAL=OFF >/dev/null
+cmake --build build --config Release --target llama-bench llama-cli llama-server -j"$CPUS" >/dev/null
 echo "    built: $(build/bin/llama-cli --version 2>&1 | head -1 || true)"
 echo "LLAMACPP_COMMIT=$(git rev-parse HEAD)" > ~/adtc/PINNED.txt
 

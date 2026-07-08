@@ -21,3 +21,4 @@ build/fused_model/
 build/gguf/
 build/calibration_text.txt
 build/imatrix.dat
+artifacts/

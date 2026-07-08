@@ -15,6 +15,12 @@ pip install -q --upgrade pip
 
 echo "==> MLX + mlx-lm (Apple Silicon fine-tuning)"
 pip install -q mlx mlx-lm
+# mlx-lm 0.31.3 DECLARES transformers>=5.0.0 but its tokenizer_utils.py actually breaks on
+# transformers 5.x (AutoTokenizer.register() signature changed; mlx_lm still calls the 4.x
+# form). Confirmed 2026-07-07: pip installs transformers 5.13.0 by default, which fails at
+# import with "AttributeError: 'str' object has no attribute '__module__'". Pin down to the
+# last working 4.x line until mlx-lm actually catches up to its own declared requirement.
+pip install -q "transformers<5"
 
 echo "==> huggingface_hub (model download) + pyyaml (config)"
 pip install -q huggingface_hub pyyaml

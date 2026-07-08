@@ -1,19 +1,23 @@
 #!/usr/bin/env bash
-# Baseline candidate GGUFs on target-class HW: generation TPS + peak RSS.
-# The output table LOCKS our model size (biggest base that clears ~16 TPS at <3.5 GB).
+# Baseline candidate GGUFs on target-class HW using the REAL adtc-profiler package —
+# not a reimplementation. Building a tiny disposable submission dir per candidate and
+# shelling out to `adtc-profiler run` guarantees byte-identical measurement methodology
+# to the real audit (same llama-bench invocation, same memory sampler, same JSON shape).
+#
+# The output table LOCKS our model size (biggest base that clears ~16-18 TPS at <3.5 GB).
 # Run on the provisioned VM: bash run_baseline.sh
 set -euo pipefail
 
-LLAMA_DIR="${LLAMA_DIR:-$HOME/adtc/llama.cpp}"
-BENCH="$LLAMA_DIR/build/bin/llama-bench"
-CLI="$LLAMA_DIR/build/bin/llama-cli"
-THREADS="${THREADS:-4}"        # match the 4-vCPU audit profile
-CTX="${CTX:-2048}"             # small context => lower RSS (tune per domain later)
-GEN_TOKENS="${GEN_TOKENS:-128}"
+THREADS="${THREADS:-4}"   # informational only — the profiler doesn't take a thread flag;
+                           # llama-bench auto-detects from the container's visible CPU count.
 mkdir -p model results
 
+if ! command -v adtc-profiler >/dev/null 2>&1; then
+  echo "adtc-profiler not on PATH — run infra/provision_benchmark_vm.sh first." >&2
+  exit 1
+fi
+
 # --- Candidates. VERIFY each URL points at a current Q4_K_M GGUF before trusting results. ---
-# Format: "label|hf_gguf_url"   (leave the strongest multilingual 3-4B bases here)
 MODELS=(
   "gemma-3-4b-it-Q4KM|https://huggingface.co/ggml-org/gemma-3-4b-it-GGUF/resolve/main/gemma-3-4b-it-Q4_K_M.gguf"
   "qwen2.5-3b-it-Q4KM|https://huggingface.co/bartowski/Qwen2.5-3B-Instruct-GGUF/resolve/main/Qwen2.5-3B-Instruct-Q4_K_M.gguf"
@@ -26,28 +30,46 @@ printf "%-24s %-10s %-12s %-10s\n" "-----" "-------" "----------" "-------"
 
 RESULT_JSON="results/baseline_$(date +%Y%m%d_%H%M%S).json"
 echo "[" > "$RESULT_JSON"; first=1
+SCRATCH=$(mktemp -d)
+trap 'rm -rf "$SCRATCH"' EXIT
 
 for entry in "${MODELS[@]}"; do
   label="${entry%%|*}"; url="${entry##*|}"; path="model/${label}.gguf"
   [ -f "$path" ] || { echo ">> downloading $label ..." >&2; curl -fL --retry 3 -o "$path" "$url" || { echo "  download FAILED for $label — check URL" >&2; continue; }; }
 
-  # Generation throughput (tg128) via llama-bench, CPU, 4 threads.
-  tps=$("$BENCH" -m "$path" -t "$THREADS" -p 0 -n "$GEN_TOKENS" -o csv 2>/dev/null \
-        | awk -F',' 'NR>1 && $0 ~ /tg/ {gsub(/"/,"",$NF); v=$NF} END{printf "%.1f", v+0}')
+  # Build a disposable submission dir for this candidate: a copy of our real
+  # submission/metadata.json with only model_path swapped, symlinked to the candidate GGUF.
+  SUB="$SCRATCH/$label"
+  mkdir -p "$SUB/model"
+  ln -sf "$(pwd)/$path" "$SUB/model/model.gguf"
+  python3 - "$SUB" <<'PYEOF'
+import json, sys
+sub = sys.argv[1]
+meta = json.load(open("submission/metadata.json"))
+meta["_runtime"]["model_path"] = "model/model.gguf"
+meta["model"]["name"] = "baseline-candidate"
+json.dump(meta, open(f"{sub}/metadata.json", "w"))
+PYEOF
+  git -C "$SUB" init -q 2>/dev/null || true
 
-  # Peak RSS via /usr/bin/time on a real generation run.
-  rss_kb=$({ /usr/bin/time -v "$CLI" -m "$path" -t "$THREADS" -c "$CTX" -n "$GEN_TOKENS" \
-             -p "Summarize the cash position of a small shop." --no-warmup >/dev/null; } 2>&1 \
-             | awk '/Maximum resident set size/ {print $NF}')
-  rss_gb=$(awk "BEGIN{printf \"%.2f\", ${rss_kb:-0}/1024/1024}")
+  REPORT="$SCRATCH/${label}_report.json"
+  if ! adtc-profiler run --submission "$SUB" --mode participant --output "$REPORT" --skip-accuracy >/dev/null 2>"$SCRATCH/${label}.err"; then
+    echo "  adtc-profiler FAILED for $label — see $SCRATCH/${label}.err" >&2
+    tail -5 "$SCRATCH/${label}.err" >&2
+    continue
+  fi
+
+  tps=$(python3 -c "import json; print(json.load(open('$REPORT'))['throughput']['tokens_per_second_generation'])")
+  rss_mb=$(python3 -c "import json; print(json.load(open('$REPORT'))['memory']['peak_rss_mb'])")
+  rss_gb=$(python3 -c "print(round($rss_mb/1024, 2))")
 
   verdict="OK"
-  awk "BEGIN{exit !(${tps:-0} < 16)}"    && verdict="SLOW(<16)"
-  awk "BEGIN{exit !(${rss_gb:-0} > 3.5)}" && verdict="${verdict}/HEAVY"
-  printf "%-24s %-10s %-12s %-10s\n" "$label" "$tps" "$rss_gb" "$verdict"
+  awk "BEGIN{exit !(${tps} < 16)}"    && verdict="SLOW(<16)"
+  awk "BEGIN{exit !(${rss_gb} > 3.5)}" && verdict="${verdict}/HEAVY"
+  printf "%-24s %-10.1f %-12s %-10s\n" "$label" "$tps" "$rss_gb" "$verdict"
 
   [ $first -eq 1 ] || echo "," >> "$RESULT_JSON"; first=0
-  printf '  {"model":"%s","tps_generation":%s,"peak_rss_gb":%s}' "$label" "${tps:-0}" "${rss_gb:-0}" >> "$RESULT_JSON"
+  printf '  {"model":"%s","tps_generation":%s,"peak_rss_gb":%s}' "$label" "$tps" "$rss_gb" >> "$RESULT_JSON"
 done
 echo "" >> "$RESULT_JSON"; echo "]" >> "$RESULT_JSON"
 echo; echo "Saved -> $RESULT_JSON  (commit it)"

@@ -1,0 +1,42 @@
+# DRY-RUN ONLY — mechanical smoke-test copy of mlx_lora_config.yaml.
+# Same model/data/LoRA shape as the real config; iters/eval cadence slashed so this finishes
+# in minutes instead of hours. Proves: does mlx_lm.lora even run on this 8GB Mac without
+# OOM/swap, and does the adapter save. NOT a real trained model.
+#
+# NOTE: do NOT judge loss from the mlx_lm.lora CONSOLE output — it's broken on this machine
+# (see build/check_loss_sanity.py header and the memory note in mlx_lora_config.yaml). This
+# dry-run only proves the run COMPLETES and saves an adapter; for a real loss signal run
+# build/check_loss_sanity.py against the saved checkpoint.
+#
+# Requires the pinned toolchain from 00_setup.sh: mlx-lm 0.29.1 + transformers<5
+# (0.30.0+ declares transformers>=5 but its code breaks on 5.x — confirmed 2026-07-08).
+
+model: "Qwen/Qwen2.5-3B-Instruct"
+train: true
+fine_tune_type: lora
+
+optimizer: adamw
+
+data: "mlx_data"
+
+seed: 42
+num_layers: 4             # measured floor on this 8GB Mac; 16 and 8 both OOM'd during eval
+batch_size: 1
+iters: 20               # real run: 1200
+val_batches: 2           # real run: 10
+learning_rate: 1e-5
+steps_per_report: 5      # real run: 20
+steps_per_eval: 10       # real run: 100
+grad_accumulation_steps: 1   # further cut: 4 -> 1 (no accumulation buffering)
+resume_adapter_file: null
+adapter_path: "adapters_dryrun"
+save_every: 20           # real run: 200
+test: false
+max_seq_length: 384      # further cut: 1024 -> 512 still OOM'd on eval
+grad_checkpoint: true
+
+lora_parameters:
+  keys: ["self_attn.q_proj", "self_attn.v_proj"]
+  rank: 8                # further cut: 16 -> 8
+  scale: 20.0
+  dropout: 0.05

@@ -4,7 +4,7 @@
 #
 # Mirror any change here into config.yaml's summary block and into submission/metadata.json.
 
-model: "Qwen/Qwen2.5-3B-Instruct"   # TODO: replace with the benchmark winner + pin a revision in config.yaml
+model: "Qwen/Qwen2.5-3B-Instruct"   # pinned revision: config.yaml base_model.hf_revision
 train: true
 fine_tune_type: lora
 
@@ -12,24 +12,38 @@ optimizer: adamw
 
 data: "mlx_data"   # produced by prepare_mlx_data.py — {train,valid}.jsonl in mlx_lm chat format
 
+# MEMORY REALITY (measured on this M2 8GB Mac, dry-run 2026-07-08):
+#   Qwen2.5-3B QLoRA peaks ~6.35-6.79 GB. num_layers=16 OOMs during EVAL; num_layers=8 also
+#   OOMs; the settings below (num_layers=4, max_seq_length=384, grad_accum=1, rank=8) are the
+#   proven floor that actually fits. These are DELIBERATELY conservative — see the tension note.
+#
+# QUALITY TENSION: max_seq_length=384 truncates the longest ~5-10% of our examples (some hit
+#   ~550 tokens once the chat template + system prompt are added), and num_layers=4 means only
+#   4 of ~36 layers get LoRA adapters. Both materially cap fine-tune quality. Before the REAL
+#   run (task #6), decide: (a) live with this floor, (b) trade num_layers<->max_seq_length via
+#   a memory probe if any headroom exists, or (c) run the real fine-tune on a rented GPU box
+#   where none of these compromises apply. This is a strategic call flagged to the user.
+#
+# Do NOT trust mlx_lm.lora's console loss/token metrics — they're broken on this machine.
+# Monitor real training with build/check_loss_sanity.py instead (see its header).
 seed: 42
-num_layers: 16       # tune up if underfitting on valid loss / holdout eval and memory allows
-batch_size: 1         # 8GB unified memory is tight — raise only if a dry run proves headroom
+num_layers: 4          # measured floor that fits; raise only after a memory probe proves headroom
+batch_size: 1
 iters: 1200
-val_batches: 25
+val_batches: 10        # eval is the OOM trigger — keep this modest
 learning_rate: 1e-5
 steps_per_report: 20
 steps_per_eval: 100
-grad_accumulation_steps: 4   # effective batch size 4 without the batch=1 memory cost
+grad_accumulation_steps: 1
 resume_adapter_file: null
 adapter_path: "adapters"
 save_every: 200
 test: false
-max_seq_length: 1024   # SME back-office prompts are short — don't pay for headroom we don't use
+max_seq_length: 384    # truncates the longest few % of examples; raise toward 640 if mem allows
 grad_checkpoint: true
 
 lora_parameters:
   keys: ["self_attn.q_proj", "self_attn.v_proj"]
-  rank: 16
+  rank: 8
   scale: 20.0
   dropout: 0.05
