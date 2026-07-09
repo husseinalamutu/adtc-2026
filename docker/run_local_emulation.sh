@@ -41,12 +41,26 @@ docker run --rm \
 
 echo
 if [ -f artifacts/local_report.json ]; then
-  python3 -c "
-import json
+  # Whether the TPS is trustworthy depends on the HOST arch:
+  #  - arm64 host (Apple Silicon Mac): Docker runs an ARM (or QEMU-x86) container -> TPS is NOT
+  #    representative of the x86 audit. Memory IS (arch-independent).
+  #  - x86_64 host (a real Intel/AMD PC): the container is native x86-64 built with the audit's
+  #    exact SIMD-off flags -> TPS IS representative (within audit tolerance, esp. on a 4c/8GB
+  #    target-class laptop). This is the number that closes the 30% speed score.
+  HOST_ARCH="$(uname -m)"
+  python3 - "$HOST_ARCH" <<'PY'
+import json, sys
+arch = sys.argv[1]
 r = json.load(open('artifacts/local_report.json'))
-print('peak_rss_mb   :', r['memory']['peak_rss_mb'], '  (ceiling 6500, hard DQ 7168)')
-print('tps_generation:', r['throughput']['tokens_per_second_generation'],
-      '  (NOT the audited number — see docker/Dockerfile header)')
-print('throttled     :', r['cpu_thermal']['throttled'])
-"
+tps = r['throughput']['tokens_per_second_generation']
+rss = r['memory']['peak_rss_mb']
+print(f"peak_rss_mb   : {rss:.0f}   (ceiling 6500, hard DQ 7168)  [trustworthy on any host]")
+if arch in ("x86_64", "amd64"):
+    verdict = "clears the 15-TPS floor" if tps >= 15 else "BELOW the 15-TPS floor"
+    print(f"tps_generation: {tps:.1f}   ✅ REAL x86 number ({arch} host) — {verdict}")
+    print("                (on a 4c/8GB target-class laptop this is within audit tolerance)")
+else:
+    print(f"tps_generation: {tps:.1f}   ⚠️  NOT representative ({arch} host, not x86) — ignore; run on an x86 PC")
+print(f"throttled     : {r['cpu_thermal']['throttled']}")
+PY
 fi
