@@ -25,16 +25,21 @@ fi
 echo "==> Building calibration text from data/out/train.jsonl ($N_SAMPLES samples)"
 python3 make_calibration_text.py --n "$N_SAMPLES"
 
-echo "==> Computing imatrix (CPU-only; f16 is 6.2GB and Metal OOMs on an 8GB Mac)"
-# -ngl 0 forces CPU: our local llama.cpp is a Metal build, and loading the 6.2GB f16 model into
-# the GPU working set + batch activations exceeds 8GB unified memory (confirmed OOM 2026-07-08:
-# "Insufficient Memory kIOGPUCommandBufferCallbackErrorOutOfMemory"). CPU is slower but safe.
-# Small -b/-ub keeps CPU-side activation buffers modest. On the TARGET-CLASS x86 VM this step
-# runs on CPU anyway (no Metal), so these flags are harmless there.
-"$IMATRIX_BIN" -m "$F16_MODEL" -f calibration_text.txt -o imatrix.dat \
-  -ngl 0 -c 512 -b 512 -ub 128 -t 4
+# IMATRIX ON A Q8_0 COPY, ON GPU. The f16 model (6.2GB) OOMs Metal on an 8GB Mac, so running
+# imatrix on it forces CPU — which is brutally slow (~71s/pass over ~110 chunks ≈ 2.5 HOURS,
+# measured 2026-07-09). Instead we compute the imatrix on a Q8_0 copy (~3.3GB, fits Metal fully)
+# with full GPU offload: Q8_0 is near-lossless (~0.1% error), so its per-tensor activation
+# statistics are effectively identical to f16's — a standard, well-established shortcut. This
+# runs in ~2 min on GPU instead of hours. The imatrix is then applied to the F16 -> Q4_K_M
+# quantize (below), so final accuracy is unaffected.
+Q8_MODEL="gguf/model-Q8_0.gguf"
+echo "==> Quantizing f16 -> Q8_0 (fast, for GPU imatrix calibration only)"
+[ -f "$Q8_MODEL" ] || "$QUANTIZE_BIN" "$F16_MODEL" "$Q8_MODEL" Q8_0
 
-echo "==> Quantizing to $QUANT_TYPE with imatrix"
+echo "==> Computing imatrix on Q8_0 with full GPU offload (-ngl 99)"
+"$IMATRIX_BIN" -m "$Q8_MODEL" -f calibration_text.txt -o imatrix.dat -ngl 99 -c 512 -t 8
+
+echo "==> Quantizing f16 -> $QUANT_TYPE with imatrix"
 mkdir -p gguf
 OUT="gguf/model-${QUANT_TYPE}.gguf"
 "$QUANTIZE_BIN" --imatrix imatrix.dat "$F16_MODEL" "$OUT" "$QUANT_TYPE"
