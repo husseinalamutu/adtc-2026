@@ -1,6 +1,6 @@
 # Session handoff — live state & how to continue
 
-Last updated: 2026-07-09, mid **Nigeria-accuracy retrain**. Any new/resumed Claude session:
+Last updated: 2026-07-09 (user moved to the Dell for the x86 benchmark), mid **Nigeria-accuracy retrain** — paused at step 1 with **456/500** Nigeria examples banked (resumable; just re-run the step-1 command, it skips what's done). Any new/resumed Claude session:
 read this + `STRATEGY.md` + `build/results/*.md`, then continue from "Where we are" below.
 
 ## Project one-liner

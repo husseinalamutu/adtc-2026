@@ -8,7 +8,7 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # --- EDIT THESE two once the HF repo exists (see submission/HUGGINGFACE_SETUP.md) ---
-HF_REPO="husseinalamutu/adtc-sme-copilot-gguf"   # TODO: confirm after you create the HF model repo
+HF_REPO="HusseinAlamutu/adtc-sme-copilot-gguf"   # live: huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
 HF_FILE="adtc-sme-copilot-Q4_K_M.gguf"
 # -----------------------------------------------------------------------------------
 

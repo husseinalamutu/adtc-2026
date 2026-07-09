@@ -19,11 +19,11 @@
   "test_prompts": [
     {
       "prompt_id": "p1",
-      "prompt": "TODO-representative (not cherry-picked). e.g. 'A retailer sends this M-Pesa statement excerpt: [rows]. Reconcile it against 3 unpaid invoices totalling KES 84,500 and list which invoices are now settled and the outstanding balance.'"
+      "prompt": "I run a hardware shop in Lagos. A customer just paid me NGN 127,500 by MTN MoMo. They have two unpaid invoices: INV-114 for NGN 85,000 and INV-121 for NGN 42,500. Does this payment clear both, and what is still outstanding on their account?"
     },
     {
       "prompt_id": "p2",
-      "prompt": "TODO-representative. e.g. 'Draft a professional quote for 12 units at KES 3,200 each with 16% VAT, 5% early-payment discount, payable via mobile money, for a Nairobi hardware shop.'"
+      "prompt": "My small trading company in Nigeria did about NGN 40 million in turnover last year. Under the new 2025 tax rules, does it have to pay Companies Income Tax, and does the Development Levy apply to a business this size?"
     }
   ],
   "model": {
