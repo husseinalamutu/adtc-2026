@@ -121,7 +121,12 @@ def generate_structured(client, model: str, system: str, user_prompt: str, schem
     for attempt in range(MAX_RETRIES):
         pacer.wait()  # steady drip under the combined per-minute quota
         try:
-            return call(client, model, system, user_prompt, schema)
+            parsed = call(client, model, system, user_prompt, schema)
+            # Groq's json_object mode occasionally wraps the object in a 1-element array; unwrap it
+            # so callers always get a dict (avoids 'list has no attribute get' crashes).
+            if isinstance(parsed, list):
+                parsed = parsed[0] if len(parsed) == 1 and isinstance(parsed[0], dict) else None
+            return parsed if isinstance(parsed, dict) else None
         except json.JSONDecodeError:
             return None  # model didn't return valid JSON this time — skip, don't retry-loop forever
         except Exception as e:  # noqa: BLE001 — retry on any transient API error

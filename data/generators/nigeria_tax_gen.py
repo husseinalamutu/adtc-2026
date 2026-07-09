@@ -78,15 +78,106 @@ and "answer". Hard rules:
 - State ONLY numbers/rates/thresholds/deadlines that appear in the given fact block. Never
   add a figure from general knowledge, even if you believe it's correct — the fact block is
   the single source of truth for this exercise.
-- If a fact's "confidence" is "secondary_corroborated", answer helpfully but naturally hedge
-  ("this is expected to...", "under the new rules...") rather than stating it as
-  courtroom-certain. If "confidence" is "primary_confirmed", you may state it plainly.
+- State the headline rate/threshold PLAINLY (e.g. "VAT is 7.5%", "small companies pay 0% CIT")
+  regardless of confidence tag — do not soften the core number itself. Reserve any hedging
+  ("this is expected to apply where...") for genuinely uncertain application details, not the
+  headline figure. This matters: vague numbers train a model that forgets them.
 - Always close with a one-line practical nudge to confirm specifics with FIRS/the Nigeria
   Revenue Service or a licensed accountant before filing — this is standard, responsible
   advisory practice, not a hedge about the facts themselves.
 - Write like you're helping a busy, non-accountant business owner or a diaspora Nigerian
   who doesn't know tax jargon. Plain English, practical, short paragraphs or a short list.
 - The question should sound like a real person typed it, not a textbook prompt."""
+
+
+# ---------------------------------------------------------------------------------------------
+# FACT-DRILL layer (added 2026-07-09). The first Nigeria model (149 scenario examples) LEARNED
+# THE STYLE of tax advice but reverted to the base model's WRONG pre-2025 priors on the actual
+# numbers (said VAT 5.5%, small-co threshold ₦5M, etc.). Fixing numeric recall against strong
+# priors needs high-signal, number-FIRST repetition — many crisp Q&A that state each core rate
+# plainly and early, in varied phrasings. This is that layer; it dominates the mix.
+FACT_DRILL_SYSTEM = """You write short, factual training Q&A for an offline assistant that answers
+Nigerian SME tax questions under the Nigeria Tax Reform Acts 2025 (effective Jan 2026).
+
+You are given ONE fact and a question angle. Produce a JSON object {"question","answer"}:
+- The QUESTION is how a real Nigerian business owner would phrase that angle (first person, plain).
+- The ANSWER must STATE THE KEY NUMBER/RULE PLAINLY IN THE FIRST SENTENCE, using ONLY the supplied
+  fact. Lead with it: e.g. "The standard VAT rate in Nigeria is 7.5%." Do NOT bury the number, do
+  NOT hedge the headline figure, do NOT add any figure not in the fact. Then 1-2 sentences of
+  practical context if useful. Keep it under ~90 words. No markdown headers.
+- End with a brief "confirm specifics with FIRS / a licensed accountant" only when the fact's
+  application genuinely depends on details — not on every answer."""
+
+# The load-bearing numbers the model MUST recall, each with several question angles so the fact
+# gets stated many times in varied framings. Answers are model-generated but grounded on `path`.
+CORE_FACTS = [
+    ("value_added_tax.standard_rate", [
+        "what the VAT rate is in Nigeria now",
+        "how much VAT to add to an invoice",
+        "the current standard VAT percentage under the 2025 rules",
+        "what percentage VAT a shop charges customers"]),
+    ("companies_income_tax.small_company_rate", [
+        "what Companies Income Tax rate a small company pays",
+        "whether a genuinely small company pays any CIT",
+        "the CIT rate for a qualifying small business"]),
+    ("companies_income_tax.standard_company_rate", [
+        "the standard Companies Income Tax rate for a normal-sized company",
+        "what CIT rate a company above the small-company threshold pays"]),
+    ("companies_income_tax.small_company_definition", [
+        "what turnover makes a company a 'small company' for 0% tax",
+        "the fixed-asset and turnover limits to count as a small company",
+        "whether my company is small enough to pay 0% CIT"]),
+    ("companies_income_tax.small_company_definition.professional_services_exclusion", [
+        "whether my consulting firm gets the small-company 0% tax if it's under the turnover limit",
+        "if a professional-services business (like consulting or accountancy) can be a small company",
+        "why a small consulting company still pays company income tax"]),
+    ("development_levy.rate", [
+        "the Development Levy rate for companies",
+        "how much Development Levy a company pays and on what"]),
+    ("development_levy.exemptions", [
+        "whether a small company pays the Development Levy",
+        "which companies are exempt from the Development Levy"]),
+    ("withholding_tax.small_company_exemption", [
+        "when a small company is exempt from deducting withholding tax",
+        "the withholding-tax exemption limit for small suppliers with a TIN"]),
+    ("capital_gains_tax.companies_rate", [
+        "the Capital Gains Tax rate for a company selling an asset"]),
+    ("capital_gains_tax.small_company_exemption", [
+        "whether a small company pays Capital Gains Tax"]),
+    ("personal_income_tax.exempt_threshold", [
+        "the income level below which an individual pays no personal income tax"]),
+    ("personal_income_tax.top_rate", [
+        "the top personal income tax rate under the new bands"]),
+    ("personal_income_tax.rent_relief", [
+        "how the new rent relief works and its cap"]),
+    ("tax_residency.rule", [
+        "how many days in Nigeria make someone a tax resident"]),
+    ("tax_residency.remittances_not_taxable", [
+        "whether money I send home to my family in Nigeria is taxed"]),
+    ("tax_residency.foreign_earned_income_exemption", [
+        "whether my foreign salary is taxed if paid into a Nigerian account"]),
+]
+
+
+def build_fact_drill_requests(n: int, seed: int) -> list[tuple[str, str, str, dict, str]]:
+    """High-signal, number-first recall pairs. Cycles the core facts x their question angles so
+    each load-bearing number is stated many times in varied framings."""
+    rng = random.Random(seed)
+    angle_pool = [(path, ang) for path, angles in CORE_FACTS for ang in angles]
+    out = []
+    for i in range(n):
+        path, angle = angle_pool[i % len(angle_pool)]
+        fact_block = get_fact(path)
+        custom_id = f"nga-drill-{i:05d}"
+        family = f"nigeria_tax_drill::{path.split('.')[0]}"
+        user_prompt = (
+            f"Fact (the ONLY source of truth — state nothing outside it):\n"
+            f"{json.dumps(fact_block, indent=2, ensure_ascii=False)}\n\n"
+            f"Question angle: {angle}.\n"
+            f"Write the question a Nigerian business owner would type, and a number-first answer."
+        )
+        out.append((custom_id, FACT_DRILL_SYSTEM, user_prompt, RESPONSE_SCHEMA, family))
+    return out
 
 
 def get_fact(path: str) -> dict:
@@ -135,10 +226,15 @@ def main():
     ap.add_argument("--n", type=int, default=600)
     ap.add_argument("--out", default="out/nigeria_tax.jsonl")
     ap.add_argument("--seed", type=int, default=11)
+    ap.add_argument("--drill-fraction", type=float, default=0.65,
+                    help="share of examples that are high-signal number-first fact drills")
     args = ap.parse_args()
 
-    reqs = build_requests(args.n, args.seed)
+    n_drill = int(args.n * args.drill_fraction)
+    n_scen = args.n - n_drill
+    reqs = build_fact_drill_requests(n_drill, args.seed) + build_requests(n_scen, args.seed + 1)
     scenario_families = {r[0]: r[4] for r in reqs}
+    print(f"  ({n_drill} fact-drill + {n_scen} scenario)")
 
     def build_example(custom_id: str, parsed: dict) -> dict | None:
         question, answer = parsed.get("question"), parsed.get("answer")

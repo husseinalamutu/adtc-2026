@@ -1,88 +1,202 @@
 {
-  "_meta": {
-    "title": "Nigeria Tax Reform Acts 2025 — curated fact base",
-    "effective_date": "2026-01-01",
-    "signed": "2025-06-26",
-    "acts": [
-      "Nigeria Tax Act, 2025 (NTA) — substantive tax law",
-      "Nigeria Tax Administration Act, 2025 (NTAA) — filing/administration/enforcement",
-      "Nigeria Revenue Service (Establishment) Act, 2025",
-      "Joint Revenue Board (Establishment) Act, 2025"
-    ],
-    "primary_sources": [
-      "seeds/nigeria_raw/tax_act_ocr_full.txt — OCR of the official Federal Republic of Nigeria Gazette, Nigeria Tax Act 2025 (210 pages, tesseract 5.5, verify-worthy but not infallible on digits)",
-      "seeds/nigeria_raw/tax_admin_act_clean.txt — clean text-layer extraction of the Nigeria Tax Administration Act 2025 (93 pages, high confidence)",
-      "seeds/nigeria_raw/zenith_diaspora_guide.txt — Zenith Bank diaspora tax guide (secondary, publisher-reviewed, high confidence on residency/remittance facts)"
-    ],
-    "confidence_note": "Every fact below is tagged 'confidence: primary_confirmed' (found verbatim in the OCR'd or clean-text primary Act) or 'confidence: secondary_corroborated' (agreed upon by 2+ independent reputable secondary sources — EY, Baker Tilly, Aluko & Oyebode, KPMG, Mercans/Safeguard Global — but not yet grep-confirmed in the primary text, usually because OCR phrasing/spacing didn't match a search pattern). Generators MUST cite this confidence level and MUST NOT state a number that is not in this file."
+ "_meta": {
+  "title": "Nigeria Tax Reform Acts 2025 — curated fact base",
+  "effective_date": "2026-01-01",
+  "signed": "2025-06-26",
+  "acts": [
+   "Nigeria Tax Act, 2025 (NTA) — substantive tax law",
+   "Nigeria Tax Administration Act, 2025 (NTAA) — filing/administration/enforcement",
+   "Nigeria Revenue Service (Establishment) Act, 2025",
+   "Joint Revenue Board (Establishment) Act, 2025"
+  ],
+  "primary_sources": [
+   "seeds/nigeria_raw/tax_act_ocr_full.txt — OCR of the official Federal Republic of Nigeria Gazette, Nigeria Tax Act 2025 (210 pages, tesseract 5.5, verify-worthy but not infallible on digits)",
+   "seeds/nigeria_raw/tax_admin_act_clean.txt — clean text-layer extraction of the Nigeria Tax Administration Act 2025 (93 pages, high confidence)",
+   "seeds/nigeria_raw/zenith_diaspora_guide.txt — Zenith Bank diaspora tax guide (secondary, publisher-reviewed, high confidence on residency/remittance facts)"
+  ],
+  "confidence_note": "Every fact below is tagged 'confidence: primary_confirmed' (found verbatim in the OCR'd or clean-text primary Act) or 'confidence: secondary_corroborated' (agreed upon by 2+ independent reputable secondary sources — EY, Baker Tilly, Aluko & Oyebode, KPMG, Mercans/Safeguard Global — but not yet grep-confirmed in the primary text, usually because OCR phrasing/spacing didn't match a search pattern). Generators MUST cite this confidence level and MUST NOT state a number that is not in this file."
+ },
+ "companies_income_tax": {
+  "small_company_rate": {
+   "value": "0%",
+   "confidence": "primary_confirmed",
+   "cite": "NTA s.56/57 area: 'a small company, at 0%'"
   },
-  "companies_income_tax": {
-    "small_company_rate": {"value": "0%", "confidence": "primary_confirmed", "cite": "NTA s.56/57 area: 'a small company, at 0%'"},
-    "standard_company_rate": {"value": "30%", "confidence": "primary_confirmed", "cite": "NTA: 'any other company, at the rate of 30% from the commencement of this Act'"},
-    "large_multinational_minimum_effective_tax_rate": {"value": "15%", "confidence": "secondary_corroborated", "cite": "EY / Baker Tilly summaries of NTA effective tax rate provisions for large/multinational groups"},
-    "small_company_definition": {
-      "turnover_threshold": {"value": "NGN 100,000,000 (₦100 million) annual gross turnover or below", "confidence": "secondary_corroborated", "note": "raised from the prior ₦25 million threshold under the old CIT Act", "cite": "EY / Baker Tilly / Aluko & Oyebode summaries"},
-      "fixed_assets_threshold": {"value": "NGN 250,000,000 (₦250 million) total fixed assets or below", "confidence": "secondary_corroborated"},
-      "note": "A company meeting BOTH thresholds is 'small' and is exempt from CIT, Capital Gains Tax, and the Development Levy."
-    }
+  "standard_company_rate": {
+   "value": "30%",
+   "confidence": "primary_confirmed",
+   "cite": "NTA: 'any other company, at the rate of 30% from the commencement of this Act'"
   },
-  "value_added_tax": {
-    "standard_rate": {"value": "7.5%", "confidence": "secondary_corroborated", "note": "unchanged from the pre-reform rate; multiple independent sources confirm no change", "cite": "EY, Baker Tilly, Kuda Business summaries"},
-    "input_vat_credit": {"value": "Businesses can now claim input VAT credit on most purchases (previously restricted to goods for resale/production)", "confidence": "secondary_corroborated"}
+  "large_multinational_minimum_effective_tax_rate": {
+   "value": "15%",
+   "confidence": "secondary_corroborated",
+   "cite": "EY / Baker Tilly summaries of NTA effective tax rate provisions for large/multinational groups"
   },
-  "withholding_tax": {
-    "small_company_exemption": {"value": "Small companies (as defined above) are exempt from deducting WHT at source where the transaction value is NGN 2,000,000 (₦2 million) or less AND the supplier has a valid Tax Identification Number (TIN)", "confidence": "secondary_corroborated"},
-    "deemed_distribution_rate": {"value": "10%", "note": "applies to undistributed profits of a closely-held Nigerian company controlled by 5 or fewer individuals, deemed distributed and subject to WHT at 10%", "confidence": "secondary_corroborated"}
-  },
-  "capital_gains_tax": {
-    "companies_rate": {"value": "30%", "note": "raised from the prior flat 10% CGT rate for companies; companies' capital gains are now effectively taxed at the standard CIT rate", "confidence": "secondary_corroborated"},
-    "individuals": {"value": "Capital gains for individuals are now taxed under the personal income tax bands (up to 25%), replacing the prior flat 10% CGT rate", "confidence": "secondary_corroborated"},
-    "small_company_exemption": {"value": "Small companies (as defined above) are exempt from CGT", "confidence": "secondary_corroborated"}
-  },
-  "personal_income_tax": {
-    "structure": {"value": "Progressive bands from 0% to 25%", "confidence": "secondary_corroborated"},
-    "exempt_threshold": {"value": "Individuals earning below NGN 800,000 (₦800,000) per annum are exempt from PIT", "confidence": "secondary_corroborated"},
-    "top_rate": {"value": "25%", "confidence": "secondary_corroborated"},
-    "rent_relief": {"value": "20% of annual rent paid, capped at a maximum of NGN 500,000 (₦500,000), replacing the previous Consolidated Relief Allowance", "confidence": "secondary_corroborated", "note": "requires the individual to declare annual rent and provide supporting information to the tax authority"}
-  },
-  "development_levy": {
-    "rate": {"value": "4%", "confidence": "primary_confirmed", "cite": "NTA s.59(1): 'A development levy of 4% is imposed on the assessable profits ... of all companies chargeable to tax'"},
-    "base": {"value": "Assessable profits of companies chargeable to tax under Chapters Two and Three of the Act", "confidence": "primary_confirmed"},
-    "exemptions": {"value": "Small companies and non-resident companies are exempt from the Development Levy", "confidence": "primary_confirmed", "cite": "NTA s.59 area: 'other than small companies and non-resident companies'"},
-    "replaces": {"value": "Consolidates and replaces the former Tertiary Education Tax, Nigeria Police Trust Fund levy, and other earmarked taxes into one unified levy", "confidence": "secondary_corroborated"}
-  },
-  "tax_residency": {
-    "rule": {"value": "An individual is a Nigerian tax resident if physically present in Nigeria for 183 days or more within any 12-month period", "confidence": "secondary_corroborated", "cite": "Zenith Bank diaspora guide"},
-    "non_resident_taxation": {"value": "Non-residents are taxed only on Nigerian-source income (e.g. rental income from Nigerian property, dividends from Nigerian companies, profits from Nigerian business operations)", "confidence": "secondary_corroborated"},
-    "resident_taxation": {"value": "Residents may be taxed on worldwide income, subject to applicable reliefs, allowances, and exemptions", "confidence": "secondary_corroborated"},
-    "foreign_earned_income_exemption": {"value": "Income earned entirely outside Nigeria by a non-resident (including remote work for foreign employers) is exempt from Nigerian tax even if remitted into Nigeria", "confidence": "secondary_corroborated"},
-    "remittances_not_taxable": {"value": "Genuine personal remittances (family support, gifts, community contributions, personal transfers) are NOT taxable income", "confidence": "secondary_corroborated"},
-    "double_taxation_relief": {"value": "Nigeria has Double Taxation Agreements (DTAs) with several countries (e.g. UK, Canada, South Africa); where no DTA exists, the Act provides unilateral relief to prevent double taxation", "confidence": "secondary_corroborated"}
-  },
-  "tin_and_filing": {
-    "who_needs_a_tin": {"value": "Required only for individuals or entities with taxable income or business activities in Nigeria", "confidence": "secondary_corroborated"},
-    "individual_tin_via_nin": {"value": "Individuals may obtain a TIN using their National Identification Number (NIN)", "confidence": "secondary_corroborated"},
-    "company_tin": {"value": "Companies receive a TIN automatically upon registration with the Corporate Affairs Commission (CAC)", "confidence": "secondary_corroborated"},
-    "existing_business_without_tin": {"value": "May apply through the Federal Inland Revenue Service (FIRS) / Nigeria Revenue Service", "confidence": "secondary_corroborated"}
-  },
-  "ngo_and_sme_treatment": {
-    "ngos": {"value": "Remain tax-exempt provided they are properly registered, operate for charitable purposes, and comply with reporting requirements", "confidence": "secondary_corroborated"},
-    "smes": {"value": "Taxed like other Nigerian businesses but eligible for the small-company exemptions and sector-specific incentives described above", "confidence": "secondary_corroborated"}
-  },
-  "authority": {
-    "name": "Federal Inland Revenue Service (FIRS) — being reconstituted as the Nigeria Revenue Service (NRS) under the Nigeria Revenue Service (Establishment) Act, 2025",
+  "small_company_definition": {
+   "turnover_threshold": {
+    "value": "NGN 100,000,000 (₦100 million) annual gross turnover or below",
+    "confidence": "secondary_corroborated",
+    "note": "raised from the prior ₦25 million threshold under the old CIT Act",
+    "cite": "EY / Baker Tilly / Aluko & Oyebode summaries"
+   },
+   "fixed_assets_threshold": {
+    "value": "NGN 250,000,000 (₦250 million) total fixed assets or below",
     "confidence": "secondary_corroborated"
-  },
-  "filing_and_penalties": {
-    "annual_returns_deadline": {
-      "value": "A company in business more than 18 months: file within 6 months after the end of its accounting year. A newly incorporated company: within 18 months of incorporation, or 6 months after the end of its first accounting period, whichever is earlier. A company permanently ceasing trade: within 6 months of ceasing.",
-      "confidence": "primary_confirmed",
-      "cite": "Nigeria Tax Administration Act 2025, s. on time of filing returns"
-    },
-    "penalty_failure_to_register": {
-      "value": "NGN 50,000 for the first month of failing/refusing to register for tax, then NGN 25,000 for each subsequent month the failure continues. A statutory body or company that awards a contract to an unregistered person is also liable to a penalty.",
-      "confidence": "primary_confirmed",
-      "cite": "Nigeria Tax Administration Act 2025, s.100(1)-(2) (Failure to register)"
-    }
+   },
+   "note": "A company meeting BOTH thresholds is 'small' and is exempt from CIT, Capital Gains Tax, and the Development Levy.",
+   "professional_services_exclusion": {
+    "value": "A business providing professional services (e.g. consulting, legal, accountancy, technical/management services) is NEVER classified as a small company, even if it is under the turnover and fixed-asset thresholds. Such a company pays the standard 30% Companies Income Tax and is NOT eligible for the 0% small-company rate, the Development Levy exemption, or the CGT exemption.",
+    "confidence": "primary_confirmed",
+    "cite": "Nigeria Tax Administration Act 2025: '\"Small Business\" means a business that earns gross turnover of N100,000,000.00 or less per annum with total fixed assets not more than N250,000,000.00 provided that any business providing professional services shall not be classified as a small business'"
+   }
   }
+ },
+ "value_added_tax": {
+  "standard_rate": {
+   "value": "7.5%",
+   "confidence": "secondary_corroborated",
+   "note": "unchanged from the pre-reform rate; multiple independent sources confirm no change",
+   "cite": "EY, Baker Tilly, Kuda Business summaries"
+  },
+  "input_vat_credit": {
+   "value": "Businesses can now claim input VAT credit on most purchases (previously restricted to goods for resale/production)",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "withholding_tax": {
+  "small_company_exemption": {
+   "value": "Small companies (as defined above) are exempt from deducting WHT at source where the transaction value is NGN 2,000,000 (₦2 million) or less AND the supplier has a valid Tax Identification Number (TIN)",
+   "confidence": "secondary_corroborated"
+  },
+  "deemed_distribution_rate": {
+   "value": "10%",
+   "note": "applies to undistributed profits of a closely-held Nigerian company controlled by 5 or fewer individuals, deemed distributed and subject to WHT at 10%",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "capital_gains_tax": {
+  "companies_rate": {
+   "value": "30%",
+   "note": "raised from the prior flat 10% CGT rate for companies; companies' capital gains are now effectively taxed at the standard CIT rate",
+   "confidence": "secondary_corroborated"
+  },
+  "individuals": {
+   "value": "Capital gains for individuals are now taxed under the personal income tax bands (up to 25%), replacing the prior flat 10% CGT rate",
+   "confidence": "secondary_corroborated"
+  },
+  "small_company_exemption": {
+   "value": "Small companies (as defined above) are exempt from CGT",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "personal_income_tax": {
+  "structure": {
+   "value": "Progressive bands from 0% to 25%",
+   "confidence": "secondary_corroborated"
+  },
+  "exempt_threshold": {
+   "value": "Individuals earning below NGN 800,000 (₦800,000) per annum are exempt from PIT",
+   "confidence": "secondary_corroborated"
+  },
+  "top_rate": {
+   "value": "25%",
+   "confidence": "secondary_corroborated"
+  },
+  "rent_relief": {
+   "value": "20% of annual rent paid, capped at a maximum of NGN 500,000 (₦500,000), replacing the previous Consolidated Relief Allowance",
+   "confidence": "secondary_corroborated",
+   "note": "requires the individual to declare annual rent and provide supporting information to the tax authority"
+  }
+ },
+ "development_levy": {
+  "rate": {
+   "value": "4%",
+   "confidence": "primary_confirmed",
+   "cite": "NTA s.59(1): 'A development levy of 4% is imposed on the assessable profits ... of all companies chargeable to tax'"
+  },
+  "base": {
+   "value": "Assessable profits of companies chargeable to tax under Chapters Two and Three of the Act",
+   "confidence": "primary_confirmed"
+  },
+  "exemptions": {
+   "value": "Small companies and non-resident companies are exempt from the Development Levy",
+   "confidence": "primary_confirmed",
+   "cite": "NTA s.59 area: 'other than small companies and non-resident companies'"
+  },
+  "replaces": {
+   "value": "Consolidates and replaces the former Tertiary Education Tax, Nigeria Police Trust Fund levy, and other earmarked taxes into one unified levy",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "tax_residency": {
+  "rule": {
+   "value": "An individual is a Nigerian tax resident if physically present in Nigeria for 183 days or more within any 12-month period",
+   "confidence": "secondary_corroborated",
+   "cite": "Zenith Bank diaspora guide"
+  },
+  "non_resident_taxation": {
+   "value": "Non-residents are taxed only on Nigerian-source income (e.g. rental income from Nigerian property, dividends from Nigerian companies, profits from Nigerian business operations)",
+   "confidence": "secondary_corroborated"
+  },
+  "resident_taxation": {
+   "value": "Residents may be taxed on worldwide income, subject to applicable reliefs, allowances, and exemptions",
+   "confidence": "secondary_corroborated"
+  },
+  "foreign_earned_income_exemption": {
+   "value": "Income earned entirely outside Nigeria by a non-resident (including remote work for foreign employers) is exempt from Nigerian tax even if remitted into Nigeria",
+   "confidence": "secondary_corroborated"
+  },
+  "remittances_not_taxable": {
+   "value": "Genuine personal remittances (family support, gifts, community contributions, personal transfers) are NOT taxable income",
+   "confidence": "secondary_corroborated"
+  },
+  "double_taxation_relief": {
+   "value": "Nigeria has Double Taxation Agreements (DTAs) with several countries (e.g. UK, Canada, South Africa); where no DTA exists, the Act provides unilateral relief to prevent double taxation",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "tin_and_filing": {
+  "who_needs_a_tin": {
+   "value": "Required only for individuals or entities with taxable income or business activities in Nigeria",
+   "confidence": "secondary_corroborated"
+  },
+  "individual_tin_via_nin": {
+   "value": "Individuals may obtain a TIN using their National Identification Number (NIN)",
+   "confidence": "secondary_corroborated"
+  },
+  "company_tin": {
+   "value": "Companies receive a TIN automatically upon registration with the Corporate Affairs Commission (CAC)",
+   "confidence": "secondary_corroborated"
+  },
+  "existing_business_without_tin": {
+   "value": "May apply through the Federal Inland Revenue Service (FIRS) / Nigeria Revenue Service",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "ngo_and_sme_treatment": {
+  "ngos": {
+   "value": "Remain tax-exempt provided they are properly registered, operate for charitable purposes, and comply with reporting requirements",
+   "confidence": "secondary_corroborated"
+  },
+  "smes": {
+   "value": "Taxed like other Nigerian businesses but eligible for the small-company exemptions and sector-specific incentives described above",
+   "confidence": "secondary_corroborated"
+  }
+ },
+ "authority": {
+  "name": "Federal Inland Revenue Service (FIRS) — being reconstituted as the Nigeria Revenue Service (NRS) under the Nigeria Revenue Service (Establishment) Act, 2025",
+  "confidence": "secondary_corroborated"
+ },
+ "filing_and_penalties": {
+  "annual_returns_deadline": {
+   "value": "A company in business more than 18 months: file within 6 months after the end of its accounting year. A newly incorporated company: within 18 months of incorporation, or 6 months after the end of its first accounting period, whichever is earlier. A company permanently ceasing trade: within 6 months of ceasing.",
+   "confidence": "primary_confirmed",
+   "cite": "Nigeria Tax Administration Act 2025, s. on time of filing returns"
+  },
+  "penalty_failure_to_register": {
+   "value": "NGN 50,000 for the first month of failing/refusing to register for tax, then NGN 25,000 for each subsequent month the failure continues. A statutory body or company that awards a contract to an unregistered person is also liable to a penalty.",
+   "confidence": "primary_confirmed",
+   "cite": "Nigeria Tax Administration Act 2025, s.100(1)-(2) (Failure to register)"
+  }
+ }
 }
