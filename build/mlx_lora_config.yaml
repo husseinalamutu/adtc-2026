@@ -35,7 +35,7 @@ steps_per_eval: 100
 grad_accumulation_steps: 4   # effective batch 4 without the batch=1 activation-memory cost
 resume_adapter_file: null
 adapter_path: "adapters"
-save_every: 200
+save_every: 100
 test: false
 max_seq_length: 1024   # full — covers our longest examples (~550 tok) with room to spare
 grad_checkpoint: true
