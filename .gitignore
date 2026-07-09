@@ -27,3 +27,5 @@ build/fused_model/
 build/adapters_*/
 .env
 **/.env
+build/*.log
+build/adapters_best/
