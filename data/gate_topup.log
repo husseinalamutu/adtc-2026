@@ -1,0 +1,27 @@
+  (200 fact-drill + 0 scenario)
+Generating 200 Nigeria-tax examples ...
+Generating 200 examples, round-robin across 1 models (llama-3.1-8b-instant) at ~8/min combined (~25 min). Paced + resumable; safe to Ctrl-C and re-run.
+  10/200 attempted, 10 written (~8.8/min, ~22 min left)
+  20/200 attempted, 20 written (~8.4/min, ~21 min left)
+  30/200 attempted, 30 written (~8.2/min, ~21 min left)
+  40/200 attempted, 40 written (~8.2/min, ~20 min left)
+  50/200 attempted, 50 written (~8.1/min, ~18 min left)
+  60/200 attempted, 60 written (~8.1/min, ~17 min left)
+  70/200 attempted, 70 written (~8.1/min, ~16 min left)
+  [groq error, giving up] Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_reques
+  80/200 attempted, 79 written (~8.0/min, ~15 min left)
+  90/200 attempted, 89 written (~8.0/min, ~14 min left)
+  100/200 attempted, 99 written (~8.0/min, ~13 min left)
+  110/200 attempted, 109 written (~8.0/min, ~11 min left)
+  120/200 attempted, 119 written (~8.0/min, ~10 min left)
+  130/200 attempted, 129 written (~8.0/min, ~9 min left)
+  140/200 attempted, 139 written (~8.0/min, ~8 min left)
+  150/200 attempted, 149 written (~8.0/min, ~6 min left)
+  [groq error, giving up] Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_reques
+  [groq error, giving up] Error code: 400 - {'error': {'message': "Failed to generate JSON. Please adjust your prompt. See 'failed_generation' for more details.", 'type': 'invalid_reques
+  160/200 attempted, 157 written (~7.9/min, ~5 min left)
+  170/200 attempted, 167 written (~7.9/min, ~4 min left)
+  180/200 attempted, 177 written (~7.9/min, ~3 min left)
+  190/200 attempted, 187 written (~7.9/min, ~1 min left)
+  200/200 attempted, 197 written (~7.9/min, ~0 min left)
+Wrote 197 new examples -> out/nigeria_tax_gate.jsonl (total in file: 197)
