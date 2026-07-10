@@ -1,7 +1,9 @@
 # Session handoff — live state & how to continue
 
-Last updated: 2026-07-09 (user moved to the Dell for the x86 benchmark), mid **Nigeria-accuracy retrain** — paused at step 1 with **456/500** Nigeria examples banked (resumable; just re-run the step-1 command, it skips what's done). Any new/resumed Claude session:
-read this + `STRATEGY.md` + `build/results/*.md`, then continue from "Where we are" below.
+Last updated: 2026-07-10 — **Nigeria-accuracy retrain COMPLETE & SHIPPED** (v3, gate 22/23,
+HANDOFF 5/5, verified on HF by sha256). Full story: `build/results/retrain_iterations_2026-07-10.md`.
+The 7-step arc below is DONE; remaining work is the Gate-1 deliverables at the bottom.
+Any new/resumed Claude session: read this + `STRATEGY.md` + `build/results/*.md` first.
 
 ## Project one-liner
 ADTC-2026 entry: offline back-office copilot for African SMEs. A Qwen2.5-3B QLoRA → imatrix
@@ -9,8 +11,9 @@ Q4_K_M GGUF (~1.93 GB), domain = `corporate_enterprise`, African use case = mobi
 reconciliation + Nigeria-2025 tax. Repo: https://github.com/husseinalamutu/adtc-2026
 
 ## Scoring status (what's locked)
-- **Accuracy (50%)**: arithmetic/reconciliation = excellent. Nigeria tax facts = **being fixed
-  right now** (v1 model hallucinated VAT/CIT numbers — see below).
+- **Accuracy (50%)**: arithmetic/reconciliation = excellent (re-verified post-retrain).
+  Nigeria tax facts = **FIXED**: 34/37 on the wide eval (`build/fact_eval.py`), all 5
+  canonical facts pass; v1 scored 24/37 / 1-of-5. Further gains → retrieval layer, not weights.
 - **Efficiency (20%)**: peak RSS ~2.0 GB → S_eff ≈ 72/100. DONE.
 - **Speed (30%)**: unmeasured. Needs the x86 Dell benchmark (see `infra/benchmark_on_windows.md`).
 - v1 model is live on HF: https://huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
