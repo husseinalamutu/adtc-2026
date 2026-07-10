@@ -126,7 +126,9 @@ CORE_FACTS = [
     ("companies_income_tax.small_company_definition", [
         "what turnover makes a company a 'small company' for 0% tax",
         "the fixed-asset and turnover limits to count as a small company",
-        "whether my company is small enough to pay 0% CIT"]),
+        "whether my company is small enough to pay 0% CIT",
+        "whether a company with turnover ABOVE the limit (e.g. ₦120 million) qualifies — answer no and spell out the comparison to the ₦100 million threshold",
+        "whether a company with turnover just UNDER the limit (e.g. ₦95 million) qualifies — answer yes and spell out the comparison to the ₦100 million threshold"]),
     ("companies_income_tax.small_company_definition.professional_services_exclusion", [
         "whether my consulting firm gets the small-company 0% tax if it's under the turnover limit",
         "if a professional-services business (like consulting or accountancy) can be a small company",
@@ -140,6 +142,9 @@ CORE_FACTS = [
     ("withholding_tax.small_company_exemption", [
         "when a small company is exempt from deducting withholding tax",
         "the withholding-tax exemption limit for small suppliers with a TIN"]),
+    ("withholding_tax.deemed_distribution_rate", [
+        "the withholding tax rate on deemed distributions of a closely-held company",
+        "how undistributed profits of a company controlled by 5 or fewer people are taxed"]),
     ("capital_gains_tax.companies_rate", [
         "the Capital Gains Tax rate for a company selling an asset"]),
     ("capital_gains_tax.small_company_exemption", [
@@ -152,6 +157,9 @@ CORE_FACTS = [
         "how the new rent relief works and its cap"]),
     ("tax_residency.rule", [
         "how many days in Nigeria make someone a tax resident"]),
+    ("tax_residency.non_resident_taxation", [
+        "whether a non-resident pays Nigerian tax on income earned outside Nigeria — answer no, only Nigerian-source income",
+        "which kinds of income Nigeria can tax a non-resident on"]),
     ("tax_residency.remittances_not_taxable", [
         "whether money I send home to my family in Nigeria is taxed"]),
     ("tax_residency.foreign_earned_income_exemption", [
