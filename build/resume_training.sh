@@ -51,6 +51,7 @@ if [ -f "$WEIGHTS" ]; then
   rm -f "$ADAPTER_DIR"/[0-9]*_adapters.safetensors
 else
   echo "No prior weights — fresh run to $TARGET_ITERS iters."
+  mkdir -p "$ADAPTER_DIR"
   echo 0 > "$OFFSET_FILE"
 fi
 
