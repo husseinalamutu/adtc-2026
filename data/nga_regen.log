@@ -94,3 +94,13 @@ Generating 95 examples, round-robin across 1 models (llama-3.1-8b-instant) at ~1
   30/95 attempted, 30 written (~9.6/min, ~7 min left)
   40/95 attempted, 40 written (~9.2/min, ~6 min left)
   50/95 attempted, 50 written (~8.8/min, ~5 min left)
+  (325 fact-drill + 175 scenario)
+Generating 500 Nigeria-tax examples ...
+Resuming: 456 already written to out/nigeria_tax.jsonl, skipping those.
+Generating 44 examples, round-robin across 1 models (llama-3.1-8b-instant) at ~8/min combined (~6 min). Paced + resumable; safe to Ctrl-C and re-run.
+  10/44 attempted, 10 written (~8.8/min, ~4 min left)
+  20/44 attempted, 20 written (~8.4/min, ~3 min left)
+  30/44 attempted, 30 written (~8.2/min, ~2 min left)
+  40/44 attempted, 40 written (~8.2/min, ~0 min left)
+  44/44 attempted, 44 written (~8.2/min, ~0 min left)
+Wrote 44 new examples -> out/nigeria_tax.jsonl (total in file: 500)
