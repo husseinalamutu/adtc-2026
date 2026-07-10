@@ -27,7 +27,7 @@ data: "mlx_data"   # produced by prepare_mlx_data.py — {train,valid}.jsonl in 
 seed: 42
 num_layers: 36         # ALL layers (Qwen2.5-3B has 36) — full-depth adaptation
 batch_size: 1
-iters: 1200            # ~1.8 epochs over 2,546 train examples; watch valid loss for the sweet spot
+iters: 1400            # +200-iter continuation for the 3 v3-eval gaps (applied thresholds, WHT deemed dist., non-resident basis)
 val_batches: 15
 learning_rate: 1e-5
 steps_per_report: 20
