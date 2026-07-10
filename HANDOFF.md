@@ -47,6 +47,10 @@ Run each through `~/adtc-local/llama.cpp/build/bin/llama-cli -m build/gguf/model
   the fallback. Both reset daily. Keys in `data/.env` (git-ignored).
 - Large HF up/downloads stall on this network → `hf_upload_watchdog.sh` auto-resumes via Xet chunks.
 - Background jobs die at session teardown but `nohup`+resumable scripts survive; re-run to continue.
+- **macOS IOGPU kernel panic** (FB22091885): sustained MLX Metal load can panic the whole Mac
+  ("completeMemory() prepare count underflow"); it killed a training run 2026-07-10. Workaround:
+  always train via `build/train_launcher.py` (caps Metal memory 5GB / cache 1GB / wired 3.5GB) —
+  `resume_training.sh` already does. Don't launch `mlx_lm.lora` bare.
 - Commits: **no `Co-Authored-By: Claude` trailer** (user preference).
 
 ## Remaining Gate-1 deliverables (after the retrain)
