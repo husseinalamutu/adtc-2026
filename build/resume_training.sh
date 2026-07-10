@@ -23,8 +23,8 @@ ADAPTER_DIR=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG'))['ad
 TARGET_ITERS=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG'))['iters'])")
 OFFSET_FILE="$ADAPTER_DIR/base_offset.txt"
 
-if pgrep -f "mlx_lm.lora --config $CONFIG" >/dev/null; then
-  echo "Training already running (PID $(pgrep -f 'mlx_lm.lora')). Tail: tail -f $LOG"
+if pgrep -f "mlx_lm.lora --config $CONFIG|train_launcher.py --config $CONFIG" >/dev/null; then
+  echo "Training already running (PID $(pgrep -f 'mlx_lm.lora|train_launcher.py')). Tail: tail -f $LOG"
   exit 0
 fi
 
@@ -56,6 +56,7 @@ else
 fi
 
 echo "==> Resuming DETACHED for $REMAINING more iters (global $GLOBAL_DONE -> $TARGET_ITERS)"
-nohup mlx_lm.lora --config "$CONFIG" $RESUME_ARGS --iters "$REMAINING" >> "$LOG" 2>&1 &
+# train_launcher.py = mlx_lm.lora + Metal memory caps (IOGPU kernel-panic workaround, FB22091885)
+nohup python3 train_launcher.py --config "$CONFIG" $RESUME_ARGS --iters "$REMAINING" >> "$LOG" 2>&1 &
 disown
 echo "launched PID $!  — tail -f $LOG"
