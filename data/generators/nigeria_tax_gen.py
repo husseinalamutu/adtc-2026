@@ -156,6 +156,12 @@ CORE_FACTS = [
         "whether money I send home to my family in Nigeria is taxed"]),
     ("tax_residency.foreign_earned_income_exemption", [
         "whether my foreign salary is taxed if paid into a Nigerian account"]),
+    ("filing_and_penalties.annual_returns_deadline", [
+        "when an established company must file its annual tax returns",
+        "the filing deadline for a newly incorporated company's first return"]),
+    ("filing_and_penalties.penalty_failure_to_register", [
+        "the penalty for failing to register for tax",
+        "what it costs a business to keep ignoring tax registration month after month"]),
 ]
 
 
