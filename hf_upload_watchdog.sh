@@ -12,12 +12,19 @@ REPO="HusseinAlamutu/adtc-sme-copilot-gguf"
 STALL_S=75
 LOG=hf_upload.log
 
+# committed = the remote GGUF's LFS sha256 equals the LOCAL file's sha256. A size-only check
+# false-passed on 2026-07-10: the stale v1 file satisfied it and the v3 retrain never uploaded.
 committed() {
   python3 - "$REPO" <<'PY' 2>/dev/null
-import os,sys
+import hashlib,os,sys
 from huggingface_hub import HfApi
+h=hashlib.sha256()
+with open("submission/model/adtc-sme-copilot-Q4_K_M.gguf","rb") as f:
+    for chunk in iter(lambda: f.read(1<<22), b""):
+        h.update(chunk)
+local=h.hexdigest()
 i=HfApi().repo_info(sys.argv[1],repo_type="model",files_metadata=True,token=os.environ["HF_TOKEN"])
-sys.exit(0 if any(s.rfilename.endswith(".gguf") and (s.size or 0)>1_000_000_000 for s in i.siblings) else 1)
+sys.exit(0 if any(s.rfilename.endswith(".gguf") and s.lfs and s.lfs.sha256==local for s in i.siblings) else 1)
 PY
 }
 
