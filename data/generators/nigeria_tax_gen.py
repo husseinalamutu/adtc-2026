@@ -159,16 +159,22 @@ CORE_FACTS = [
 ]
 
 
-def build_fact_drill_requests(n: int, seed: int) -> list[tuple[str, str, str, dict, str]]:
+def build_fact_drill_requests(n: int, seed: int, topics: list[str] | None = None,
+                              id_prefix: str = "nga-drill") -> list[tuple[str, str, str, dict, str]]:
     """High-signal, number-first recall pairs. Cycles the core facts x their question angles so
-    each load-bearing number is stated many times in varied framings."""
+    each load-bearing number is stated many times in varied framings. `topics` (substring match
+    on the fact path) narrows the pool to weak facts flagged by the GGUF fact check; pair it
+    with a distinct `id_prefix` + out file so the top-up never collides with the main run."""
     rng = random.Random(seed)
-    angle_pool = [(path, ang) for path, angles in CORE_FACTS for ang in angles]
+    angle_pool = [(path, ang) for path, angles in CORE_FACTS for ang in angles
+                  if not topics or any(t in path for t in topics)]
+    if not angle_pool:
+        raise SystemExit(f"--topics {topics} matched no CORE_FACTS paths")
     out = []
     for i in range(n):
         path, angle = angle_pool[i % len(angle_pool)]
         fact_block = get_fact(path)
-        custom_id = f"nga-drill-{i:05d}"
+        custom_id = f"{id_prefix}-{i:05d}"
         family = f"nigeria_tax_drill::{path.split('.')[0]}"
         user_prompt = (
             f"Fact (the ONLY source of truth — state nothing outside it):\n"
@@ -228,11 +234,17 @@ def main():
     ap.add_argument("--seed", type=int, default=11)
     ap.add_argument("--drill-fraction", type=float, default=0.65,
                     help="share of examples that are high-signal number-first fact drills")
+    ap.add_argument("--topics", default=None,
+                    help="comma-separated substrings of CORE_FACTS paths; drills only matching facts")
+    ap.add_argument("--id-prefix", default="nga-drill",
+                    help="custom_id prefix for drill examples (use a distinct one for topic top-ups)")
     args = ap.parse_args()
 
+    topics = [t.strip() for t in args.topics.split(",")] if args.topics else None
     n_drill = int(args.n * args.drill_fraction)
     n_scen = args.n - n_drill
-    reqs = build_fact_drill_requests(n_drill, args.seed) + build_requests(n_scen, args.seed + 1)
+    reqs = build_fact_drill_requests(n_drill, args.seed, topics=topics,
+                                     id_prefix=args.id_prefix) + build_requests(n_scen, args.seed + 1)
     scenario_families = {r[0]: r[4] for r in reqs}
     print(f"  ({n_drill} fact-drill + {n_scen} scenario)")
 
