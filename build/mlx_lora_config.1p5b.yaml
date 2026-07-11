@@ -1,0 +1,36 @@
+# mlx_lm.lora config — 1.5B speed/accuracy CANDIDATE (scalar-audit speed tradeoff experiment).
+# Identical recipe to mlx_lora_config.yaml (the shipped 3B) except the base model and the
+# adapter output dir, so the accuracy comparison is apples-to-apples. Qwen2.5-1.5B has 28
+# decoder layers (vs 36 in the 3B) — num_layers updated accordingly. Same data (mlx_data,
+# with the oversampled Nigeria drills), same LoRA targets/rank, same LR/iters.
+# Run: python3 train_launcher.py --config mlx_lora_config.1p5b.yaml   (or resume_training.sh mlx_lora_config.1p5b.yaml)
+model: "models/Qwen2.5-1.5B-Instruct-4bit"
+train: true
+fine_tune_type: lora
+
+optimizer: adamw
+
+data: "mlx_data"
+
+seed: 42
+num_layers: 28         # ALL layers (Qwen2.5-1.5B has 28)
+batch_size: 1
+iters: 1200
+val_batches: 15
+learning_rate: 1e-5
+steps_per_report: 20
+steps_per_eval: 100
+grad_accumulation_steps: 4
+resume_adapter_file: null
+adapter_path: "adapters_1p5b"
+save_every: 100
+test: false
+max_seq_length: 1024
+grad_checkpoint: true
+
+lora_parameters:
+  keys: ["self_attn.q_proj", "self_attn.k_proj", "self_attn.v_proj", "self_attn.o_proj",
+         "mlp.gate_proj", "mlp.up_proj", "mlp.down_proj"]
+  rank: 32
+  scale: 20.0
+  dropout: 0.05

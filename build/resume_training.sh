@@ -17,8 +17,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 source .venv/bin/activate
 
-CONFIG=mlx_lora_config.yaml
-LOG=train_real.log
+CONFIG="${1:-mlx_lora_config.yaml}"   # optional arg: alternate config (e.g. mlx_lora_config.1p5b.yaml)
+LOG="${2:-train_real.log}"
 ADAPTER_DIR=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG'))['adapter_path'])")
 TARGET_ITERS=$(python3 -c "import yaml; print(yaml.safe_load(open('$CONFIG'))['iters'])")
 OFFSET_FILE="$ADAPTER_DIR/base_offset.txt"
