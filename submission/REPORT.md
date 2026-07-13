@@ -28,11 +28,15 @@ are things only this user needs. A generic "business assistant" could be anywher
 
 ## 2. Design decisions (and the alternatives we rejected)
 
-**Base model — Qwen2.5-3B-Instruct (4-bit).** The scoring floor is speed (`min(TPS/15,1)`): a model
-must clear ~15 tok/s on a 4-core/8 GB integrated-GPU laptop. A 3B at Q4_K_M sits in the sweet spot —
-big enough for real accuracy, small enough to clear the floor at ~2 GB RSS. We rejected 7–8B (fails
-the speed floor and risks the 7 GB OOM line) and sub-2B (clears speed easily but caps accuracy,
-which is 50% of the score). Qwen2.5-3B specifically: strong multilingual/general reasoning, a large
+**Base model — Qwen2.5-3B-Instruct (4-bit).** Speed is scored *relative to the fastest submission*
+(`S_perf = 100·TPS_act/TPS_max`), and the audit runs a deliberately SIMD-disabled (scalar) llama.cpp
+build that slows every submission alike — measured at **2.75 tok/s** for our 3B on an audit-class
+i7-1185G7 (4 CPUs / 7.5 GB, audit-exact flags). We made the size decision **empirically**: we
+trained a 1.5B on identical data and it *matched the 3B on domain-fact recall (35/37 vs 34/37)*
+but **failed multi-invoice reconciliation arithmetic — including the class of our own declared
+test prompt p1** — for only ~2× speed. Since accuracy is 50% of the score (and judged partly
+qualitatively), we kept the 3B and accept the relative speed cost. We likewise rejected 7–8B
+(~2× slower still, and it risks the 7 GB OOM line). Qwen2.5-3B specifically: strong multilingual/general reasoning, a large
 GGUF/quant ecosystem, and permissive licensing. We fine-tune from the **pre-quantized 4-bit build**
 (`mlx-community/Qwen2.5-3B-Instruct-4bit`) — this is true QLoRA and is what makes a full-quality
 fine-tune fit in 8 GB (see §4).
@@ -105,16 +109,20 @@ Profiled with the official `adtc-profiler` (participant mode):
 |---|---|---|
 | **Accuracy** — val loss on held-out families | **2.175 → 0.424** (baseline → final) | Large, clean drop on *unseen* scenario families → genuine domain learning, not memorization |
 | **Efficiency (20%)** — peak RSS | **~2.0 GB** (2023 MB) | **S_eff ≈ 72/100**; enormous margin under the 7 GB DQ line, zero OOM risk |
-| **Speed (30%)** — generation TPS | **[TO BE MEASURED on target-class x86 — see note]** | — |
+| **Speed (30%)** — generation TPS | **2.75 tok/s** (i7-1185G7, audit-exact scalar build, `-t 4`; ~2.0 at llama-bench auto-threads) | `S_perf = 100·TPS/TPS_max` — relative to the field; see note |
 | Thermal | no throttle | −0 penalty |
 | Integrity | `params_match: true`, arch `qwen2` recognized | passes fraud check |
 
 > **Speed measurement note.** TPS must be measured on x86 (the audit architecture); an Apple-Silicon
-> host cannot produce a representative number. We benchmark on an **Intel i7-1185G7 (11th-gen, 4-core
-> Tiger Lake U, integrated Iris Xe)** — squarely in the audit's i5/Ryzen-5 class — using llama.cpp
-> built with the audit's exact SIMD-disabled flags, pinned to 4 CPUs / 7.5 GB. A 3B Q4_K_M on this
-> class of chip is expected to clear the 15-TPS floor with margin. **[Final TPS: __ tok/s — inserted
-> once measured.]**
+> host cannot produce a representative number. We benchmarked on an **Intel i7-1185G7 (11th-gen,
+> 4-core Tiger Lake U, integrated Iris Xe)** — squarely in the audit's i5/Ryzen-5 class — using
+> llama.cpp built with the audit's exact SIMD-disabled flags (verified verbatim against the official
+> adtc-profiler Dockerfile), pinned to 4 CPUs / 7.5 GB: **2.75 tok/s** (`llama-bench`-comparable;
+> throttled=false). Context for the judges: with every SIMD path off (`GGML_AVX/AVX2/FMA/F16C=OFF`),
+> generation is compute-bound scalar math, ~8–10× below the same chip's AVX2 numbers — this affects
+> all submissions equally under the relative formula `S_perf = 100·TPS/TPS_max`. We validated the
+> size trade empirically (a 1.5B doubled speed but failed declared-prompt reconciliation arithmetic;
+> see build/results/model_size_tradeoff_2026-07-13.md) and chose accuracy.
 
 ## 6. Summary
 

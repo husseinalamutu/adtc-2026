@@ -4,10 +4,13 @@
 > Verified against the live `adtc-profiler` source + `adtc-2026-submission-template` (2026-07-07).
 
 ## The verdict (what wins)
-Ship a **single Q4_K_M (imatrix) GGUF of the biggest multilingual 3–4B base that still clears ~16+ TPS**
-on target-class hardware, **domain-fine-tuned** for our use case, defended with a real offline demo.
-Accuracy (50%) is the race; speed saturates at 15 TPS (per profiler `min(TPS/15,1)`), so we do NOT
-overspend on speed. Never OOM (7 GB = instant 0). Stay ≤ 3.5 GB peak RSS with margin.
+Ship a **single Q4_K_M (imatrix) GGUF of the biggest multilingual 3–4B base**, **domain-fine-tuned**
+for our use case, defended with a real offline demo.
+Accuracy (50%) is the race. Speed (30%) is **relative to the fastest submission** — no fixed floor,
+see corrected scoring math below; the audit's SIMD-disabled scalar build caps a 3B at ~2.75 tok/s
+on target hardware, and the measured 1.5B trade (results/model_size_tradeoff_2026-07-13.md) broke
+declared-prompt arithmetic, so accuracy wins the size decision. Never OOM (7 GB = instant 0).
+Stay ≤ 3.5 GB peak RSS with margin.
 
 ## Locked decisions
 | Decision | Choice | Why |
@@ -22,9 +25,15 @@ overspend on speed. Never OOM (7 GB = instant 0). Stay ≤ 3.5 GB peak RSS with 
 | Quant | **Q4_K_M with imatrix** (domain calibration set) | Community sweet spot; imatrix recovers near-free accuracy. |
 | Runtime | `llama.cpp` only, GGUF | Hard requirement; anything else auto-rejected. |
 
-## Scoring math (verified)
+## Scoring math (re-verified 2026-07-13 against africadeeptech.org/challenge-2026 — the website
+## supersedes the profiler README, whose `min(TPS/15,1)` speed formula is STALE)
 - `S_total = 0.50·S_acc + 0.30·S_perf + 0.20·S_eff − P_thermal`
-- `S_perf = min(TPS/15, 1.0)×100`  → **≥15 TPS = full marks; faster earns nothing.** Target 18–25 for audit margin (±25%).
+- `S_perf = 100×(TPS_act ÷ TPS_max)` — **relative to the fastest submission across all teams; no
+  cap, no fixed floor.** Under the audit's scalar (SIMD-off) llama.cpp build every team is slowed
+  alike; our points depend on the field's TPS_max (unknowable in advance — do not chase it by
+  shrinking below accuracy-safe size; measured at 3B ≈ 2.75 tok/s, 1.5B ≈ ~5.5 but fails arithmetic).
+- `S_acc` = automated benchmarks **plus qualitative judge assessment of responses** — coherence and
+  non-contradictory reasoning are scored, not just extractable numbers.
 - `S_eff = max(0,(7−peak_rss_gb)/7)×100` → target ≤ 3.5 GB (RSS ±15% audit tolerance).
 - `P_thermal = −10` if throttle or >85 °C.
 - Bonuses: `budget_laptop_claim:true` (+10%, everyone), `african_alpha_claim:true` (+15%, differentiator — website says "on panel score", so treat absolute bonus math as optimistic).
