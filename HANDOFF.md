@@ -51,9 +51,10 @@ Model: https://huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
 ## Remaining Gate-1 deliverables (due Aug 25, 2026)
 - [ ] `submission/metadata.json`: fill `team_id` + `github_handle` (user's Devpost/GitHub) —
       submission validation will fail on the TODOs.
-- [ ] Load-bearing pairing decision: metadata claims a deterministic finance module that does
-      not exist yet — either build it (demo spine; reconciliation logic can be extracted from
-      `data/generators/templated_gen.py`) or set `load_bearing: false` and reword. User deciding.
+- [x] Load-bearing pairing: **BUILT** (`demo/finance/` — MoMo parser + double-entry ledger with
+      lump-sum/carry allocation + citeable TaxRules from the verified facts file; 13 tests, the
+      eval cases the models got wrong included). metadata.json's claim is now true. Next: wire
+      it into the demo app UI beside the model (Best Integration Award target).
 - [ ] Send `infra/organizer_questions_draft.md` (scalar build intentional? llama.cpp pin?
       which speed formula governs?) — user reviews and sends.
 - [ ] 2-min video + demo app for the live defense (llama-server UI is the zero-code fallback).
