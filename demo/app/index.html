@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ADTC SME Copilot — offline back-office assistant</title>
+<style>
+  :root { --ink:#1a2330; --mut:#5b6b7d; --bg:#f4f6f8; --card:#fff; --brand:#0a7d55;
+          --brand2:#0b5e8a; --line:#dde4ea; --ok:#e8f6ef; }
+  * { box-sizing:border-box; }
+  body { margin:0; font:16px/1.5 -apple-system,"Segoe UI",Roboto,sans-serif; color:var(--ink); background:var(--bg); }
+  header { background:var(--brand); color:#fff; padding:14px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+  header h1 { font-size:1.15rem; margin:0; }
+  .badge { font-size:.78rem; background:rgba(255,255,255,.16); border:1px solid rgba(255,255,255,.35);
+           padding:3px 10px; border-radius:999px; }
+  main { max-width:880px; margin:20px auto; padding:0 16px; }
+  nav { display:flex; gap:8px; margin-bottom:16px; }
+  nav button { flex:1; padding:10px; font-size:.95rem; border:1px solid var(--line); background:var(--card);
+               border-radius:10px; cursor:pointer; }
+  nav button.active { background:var(--brand); color:#fff; border-color:var(--brand); }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; }
+  label { display:block; font-size:.85rem; color:var(--mut); margin:10px 0 4px; }
+  input, textarea { width:100%; padding:9px; border:1px solid var(--line); border-radius:8px; font:inherit; }
+  textarea { min-height:74px; }
+  .row { display:flex; gap:10px; } .row > * { flex:1; }
+  .go { margin-top:14px; padding:11px 22px; font-size:1rem; background:var(--brand2); color:#fff;
+        border:none; border-radius:10px; cursor:pointer; }
+  .go:disabled { opacity:.5; }
+  .result { display:none; }
+  .verified { background:var(--ok); border:1px solid #bfe3d2; border-radius:10px; padding:12px 14px;
+              white-space:pre-wrap; font-variant-numeric:tabular-nums; }
+  .verified h4, .narr h4 { margin:0 0 6px; font-size:.8rem; text-transform:uppercase; letter-spacing:.05em; color:var(--brand); }
+  .narr { margin-top:12px; padding:12px 14px; border:1px dashed var(--line); border-radius:10px; white-space:pre-wrap; }
+  .narr h4 { color:var(--brand2); }
+  .cites { font-size:.8rem; color:var(--mut); margin-top:8px; }
+  .chips { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
+  .chips button { font-size:.82rem; border:1px solid var(--line); background:#fbfcfd; border-radius:999px;
+                  padding:4px 12px; cursor:pointer; }
+  .muted { color:var(--mut); font-size:.85rem; }
+  .spin { display:none; margin-left:10px; color:var(--mut); }
+  footer { text-align:center; color:var(--mut); font-size:.8rem; padding:24px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ADTC SME Copilot</h1>
+  <span class="badge">100% offline</span>
+  <span class="badge">figures computed, never guessed</span>
+  <span class="badge">verified against the Nigeria Tax Acts 2025</span>
+</header>
+<main>
+  <nav>
+    <button data-tab="reconcile" class="active">Reconcile a payment</button>
+    <button data-tab="tax">Tax question</button>
+    <button data-tab="quote">Make a quote</button>
+  </nav>
+
+  <!-- RECONCILE -->
+  <section class="card tab" id="tab-reconcile">
+    <p class="muted">Paste the mobile-money statement (or a single payment) and your open invoices.
+    The ledger computes what's settled; the copilot explains it.</p>
+    <label>Mobile-money statement text</label>
+    <textarea id="rc-stmt" placeholder="TX001: NGN 45,000; TXN 8842 | RECEIVED NGN 127,500 from 0803***512"></textarea>
+    <div class="chips">
+      <button onclick="rcExample()">Example: MoMo payment vs two invoices</button>
+    </div>
+    <label>Open invoices (one per line:&nbsp; INV-114, 85000)</label>
+    <textarea id="rc-invs" placeholder="INV-114, 85000&#10;INV-121, 42500"></textarea>
+    <label><input type="checkbox" id="rc-lump" style="width:auto"> Single lump-sum payment — apply oldest first</label>
+    <input id="rc-amt" placeholder="Payment amount, e.g. 127500" style="display:none">
+    <button class="go" onclick="run('reconcile')">Reconcile</button><span class="spin">computing…</span>
+    <div class="result">
+      <h3>Result</h3>
+      <div class="verified"><h4>Verified figures — accounting module</h4><div class="v"></div></div>
+      <div class="narr"><h4>Copilot explains</h4><div class="n"></div></div>
+    </div>
+  </section>
+
+  <!-- TAX -->
+  <section class="card tab" id="tab-tax" hidden>
+    <p class="muted">Ask anything about the 2025 rules. Fill the company figures and the rule engine
+    adds a verdict with its citation from the Act.</p>
+    <label>Your question</label>
+    <textarea id="tx-q" placeholder="Does my company pay Companies Income Tax?"></textarea>
+    <div class="chips">
+      <button onclick="txExample(0)">My ₦40m trading company — do we pay CIT?</button>
+      <button onclick="txExample(1)">Wetin be di VAT rate wey I go charge?</button>
+      <button onclick="txExample(2)">Consulting firm, ₦60m — small company?</button>
+    </div>
+    <div class="row">
+      <div><label>Annual turnover (₦, optional)</label><input id="tx-turn" placeholder="40000000"></div>
+      <div><label>Total fixed assets (₦, optional)</label><input id="tx-ass" placeholder="100000000"></div>
+    </div>
+    <label><input type="checkbox" id="tx-prof" style="width:auto"> We provide professional services (consulting, legal, accountancy…)</label>
+    <button class="go" onclick="run('tax')">Ask</button><span class="spin">thinking…</span>
+    <div class="result">
+      <h3>Result</h3>
+      <div class="verified"><h4>Verified verdict — rule engine</h4><div class="v"></div><div class="cites"></div></div>
+      <div class="narr"><h4>Copilot answers</h4><div class="n"></div></div>
+    </div>
+  </section>
+
+  <!-- QUOTE -->
+  <section class="card tab" id="tab-quote" hidden>
+    <p class="muted">List the items; VAT and totals are computed, then the copilot drafts the
+    customer-facing message.</p>
+    <label>Items (one per line:&nbsp; description, qty, unit price)</label>
+    <textarea id="qt-items" placeholder="Bags of cement, 10, 8500"></textarea>
+    <div class="chips"><button onclick="qtExample()">Example: 10 bags of cement @ ₦8,500</button></div>
+    <button class="go" onclick="run('quote')">Build quote</button><span class="spin">computing…</span>
+    <div class="result">
+      <h3>Result</h3>
+      <div class="verified"><h4>Verified figures — VAT engine</h4><div class="v"></div></div>
+      <div class="narr"><h4>Copilot drafts</h4><div class="n"></div></div>
+    </div>
+  </section>
+</main>
+<footer>Runs entirely on this machine — model: adtc-sme-copilot (Qwen2.5-3B QLoRA, Q4_K_M) via llama.cpp ·
+figures: deterministic finance module · facts: Nigeria Tax Acts 2025 (verified corpus)</footer>
+
+<script>
+const $ = s => document.querySelector(s);
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(x => x.hidden = true);
+  b.classList.add("active"); $("#tab-" + b.dataset.tab).hidden = false;
+});
+$("#rc-lump").onchange = e => $("#rc-amt").style.display = e.target.checked ? "block" : "none";
+
+function rcExample() {
+  $("#rc-stmt").value = "TXN 8842 | 2026-07-11 | RECEIVED NGN 127,500 from 0803***512";
+  $("#rc-invs").value = "INV-114, 85000\nINV-121, 42500";
+  $("#rc-lump").checked = true; $("#rc-amt").style.display = "block"; $("#rc-amt").value = "127500";
+}
+const TX = [
+  ["My trading company turned over 40 million naira last year. Do we pay Companies Income Tax, and does the Development Levy apply?", "40000000", "100000000", false],
+  ["Wetin be di VAT rate wey I go charge for goods for my shop?", "", "", false],
+  ["I run a consulting firm with 60 million turnover. Do I qualify for the 0% small company rate?", "60000000", "50000000", true],
+];
+function txExample(i) {
+  const [q, t, a, p] = TX[i];
+  $("#tx-q").value = q; $("#tx-turn").value = t; $("#tx-ass").value = a; $("#tx-prof").checked = p;
+}
+function qtExample() { $("#qt-items").value = "Bags of cement, 10, 8500"; }
+
+function payload(task) {
+  if (task === "reconcile") {
+    const invoices = $("#rc-invs").value.trim().split("\n").filter(Boolean).map(l => {
+      const [id, amount] = l.split(","); return { id: id.trim(), amount: (amount || "0").trim() };
+    });
+    const lump = $("#rc-lump").checked;
+    return { statement: $("#rc-stmt").value, invoices,
+             mode: lump ? "lump" : "exact", lump_amount: lump ? $("#rc-amt").value || "0" : null };
+  }
+  if (task === "tax")
+    return { question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
+             fixed_assets: $("#tx-ass").value || null, professional_services: $("#tx-prof").checked };
+  return { items: $("#qt-items").value.trim().split("\n").filter(Boolean).map(l => {
+    const [desc, qty, unit_price] = l.split(",");
+    return { desc: (desc||"").trim(), qty: (qty||"1").trim(), unit_price: (unit_price||"0").trim() };
+  }) };
+}
+
+async function run(task) {
+  const tab = $("#tab-" + task);
+  tab.querySelector(".go").disabled = true; tab.querySelector(".spin").style.display = "inline";
+  try {
+    const r = await fetch("/api/" + task, { method:"POST", headers:{ "Content-Type":"application/json" },
+                                            body: JSON.stringify(payload(task)) });
+    const d = await r.json();
+    tab.querySelector(".result").style.display = "block";
+    tab.querySelector(".verified .v").textContent = d.error ? ("Input problem: " + d.error)
+                                                            : (d.verified || "(no structured figures for this question — model answer below)");
+    const cites = tab.querySelector(".cites");
+    if (cites) cites.textContent = (d.cites && d.cites.length) ? "Source: " + d.cites.join(" · ") : "";
+    tab.querySelector(".narr .n").textContent =
+      d.narrative || "(model offline — start llama-server to add the plain-language explanation; the verified figures above are complete and correct without it)";
+  } finally {
+    tab.querySelector(".go").disabled = false; tab.querySelector(".spin").style.display = "none";
+  }
+}
+</script>
+</body>
+</html>

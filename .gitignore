@@ -30,3 +30,5 @@ build/adapters_*/
 build/*.log
 build/adapters_best/
 submission/VIDEO_SCRIPT.md
+demo/app/llama_server.log
+demo/app/app_server.log
