@@ -29,3 +29,4 @@ build/adapters_*/
 **/.env
 build/*.log
 build/adapters_best/
+submission/VIDEO_SCRIPT.md
