@@ -37,8 +37,13 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
    x86-64 — so the printed `tps_generation` is a **REAL** number and the script will say so
    (`✅ REAL x86 number`), unlike on the Mac.
 
-**Read the output:** you want `tps_generation` comfortably ≥ 16 (floor is 15; margin for the
-±25% audit variance) and `peak_rss_mb` well under 6500. Paste the three lines back to me.
+**Read the output:** `peak_rss_mb` should be well under 6500; `tps_generation` is informational —
+speed is scored **relative to the fastest submission** (`S_perf = 100·TPS/TPS_max`, no floor).
+Paste the three lines back.
+> **MEASURED 2026-07-12:** peak_rss 2052 MB, **2.75 tok/s** (`-t 4`; ~2.0 auto-threads),
+> throttled=false. ~8-10× below AVX2 numbers because the audit build disables all SIMD —
+> this hits every submission equally; see STRATEGY.md "Scoring math" and
+> build/results/model_size_tradeoff_2026-07-13.md for why we kept the 3B anyway.
 
 ---
 
@@ -52,7 +57,7 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
    export PATH="$HOME/adtc/llama.cpp/build/bin:$PATH"   # so the profiler finds llama-bench
    cd benchmark && python3 telemetry_test.py --submission ../submission
    ```
-   `telemetry_test.py` prints PASS/FAIL against the RSS ceiling and the 16-TPS floor.
+   `telemetry_test.py` prints PASS/FAIL against the RSS ceiling (TPS is reported informationally).
 
 > WSL2 note: WSL2 by default may see all 8 threads and more RAM than the audit. For an
 > audit-faithful number, cap it: create `C:\Users\<you>\.wslconfig` with:
@@ -65,11 +70,9 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
 
 ---
 
-## Interpreting the result
-- **tps ≥ ~18**: we clear the speed floor with healthy margin → full 30% speed score, safe under audit variance. 🎯
-- **tps 15-18**: clears the floor but tight — fine, but we'd note it and maybe shave context/threads.
-- **tps < 15**: we'd need a leaner quant or a smaller model. (Unlikely — a 3B Q4_K_M on a 4-core
-  Tiger Lake should do ~20-30 tok/s even de-optimized.)
+## Interpreting the result (updated 2026-07-13 — the original floor-based guidance was wrong)
+- There is **no speed floor**: `S_perf = 100·TPS/TPS_max`, relative to the fastest submission.
+  The audit's scalar (SIMD-off) build caps ANY 3B near ~2-3 tok/s on this chip — the original
+  "20-30 tok/s even de-optimized" prediction did not account for full-scalar kernels.
 - **peak_rss** should read ~2.0 GB (matches our Mac profile; memory is architecture-independent).
-
-Send me the numbers and I'll tell you exactly where we stand on the speed score.
+- Our recorded numbers (2026-07-12): rss 2052 MB, 2.75 tok/s, no throttling — final, in REPORT.md.

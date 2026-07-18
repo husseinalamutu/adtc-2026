@@ -11,7 +11,7 @@ on an 8 GB laptop.
 | Dir | Purpose |
 |---|---|
 | `infra/` | Provision a target-class benchmarking VM (4 vCPU / 8 GB / no GPU). |
-| `benchmark/` | Baseline candidate models; the telemetry regression test (RSS<6.5, TPS≥16). |
+| `benchmark/` | Baseline candidate models; the telemetry regression test (RSS < 6.5 GB; TPS informational — scored relative to the field). |
 | `build/` | Fine-tune → merge → GGUF → imatrix → quantize recipe (one command rebuilds the exact model). |
 | `eval/` | Domain accuracy smoke tests + overfit hold-out (proxy for the 2 hidden prompts). |
 | `demo/` | Offline demo app (LLM + finance/tax integration) for the video & live defense. |

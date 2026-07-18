@@ -173,13 +173,13 @@ CORE_FACTS = [
 ]
 
 
-def build_fact_drill_requests(n: int, seed: int, topics: list[str] | None = None,
+def build_fact_drill_requests(n: int, topics: list[str] | None = None,
                               id_prefix: str = "nga-drill") -> list[tuple[str, str, str, dict, str]]:
     """High-signal, number-first recall pairs. Cycles the core facts x their question angles so
-    each load-bearing number is stated many times in varied framings. `topics` (substring match
-    on the fact path) narrows the pool to weak facts flagged by the GGUF fact check; pair it
-    with a distinct `id_prefix` + out file so the top-up never collides with the main run."""
-    rng = random.Random(seed)
+    each load-bearing number is stated many times in varied framings (deterministic — no RNG).
+    `topics` (substring match on the fact path) narrows the pool to weak facts flagged by the
+    GGUF fact check; pair it with a distinct `id_prefix` + out file so the top-up never collides
+    with the main run."""
     angle_pool = [(path, ang) for path, angles in CORE_FACTS for ang in angles
                   if not topics or any(t in path for t in topics)]
     if not angle_pool:
@@ -257,7 +257,7 @@ def main():
     topics = [t.strip() for t in args.topics.split(",")] if args.topics else None
     n_drill = int(args.n * args.drill_fraction)
     n_scen = args.n - n_drill
-    reqs = build_fact_drill_requests(n_drill, args.seed, topics=topics,
+    reqs = build_fact_drill_requests(n_drill, topics=topics,
                                      id_prefix=args.id_prefix) + build_requests(n_scen, args.seed + 1)
     scenario_families = {r[0]: r[4] for r in reqs}
     print(f"  ({n_drill} fact-drill + {n_scen} scenario)")

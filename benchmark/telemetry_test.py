@@ -28,7 +28,10 @@ import tempfile
 from pathlib import Path
 
 RSS_CEILING_MB = 6500.0
-TPS_FLOOR = 16.0
+# Speed has NO floor: the website's S_perf = 100·TPS_act/TPS_max is relative to the fastest
+# submission (the profiler README's min(TPS/15,1) is stale — see STRATEGY.md "Scoring math").
+# Under the audit's scalar (SIMD-off) build our 3B measures ~2.75 tok/s on target hardware,
+# so TPS is reported informationally, never pass/fail.
 # The profiler's own thermal.py hardcodes 95.0°C as a placeholder (explicitly marked
 # "revisit in Phase 2 once we have a real audit VM to calibrate against" in its source).
 # The challenge website states 85°C. We target well under 85°C so we're safe under either.
@@ -76,9 +79,8 @@ def main() -> int:
     if rss >= RSS_CEILING_MB:
         print("  FAIL: too close to the 7 GB OOM/DQ line."); ok = False
 
-    print(f"tokens_per_second   = {tps:.1f}   (floor {TPS_FLOOR}, full marks at 15)")
-    if tps < TPS_FLOOR:
-        print("  FAIL: below the speed-margin floor."); ok = False
+    print(f"tokens_per_second   = {tps:.1f}   (informational — scored relative to the field: "
+          f"S_perf = 100*TPS/TPS_max; ~2.75 expected for the 3B under the scalar audit build)")
 
     print(f"thermal.throttled   = {throttled}   (profiler flags this at its own coded 95°C; site states 85°C)")
     if core_temp is not None:

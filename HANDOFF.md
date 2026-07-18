@@ -1,46 +1,34 @@
 # Session handoff — live state & how to continue
 
-Last updated: 2026-07-10 — **Nigeria-accuracy retrain COMPLETE & SHIPPED** (v3, gate 22/23,
-HANDOFF 5/5, verified on HF by sha256). Full story: `build/results/retrain_iterations_2026-07-10.md`.
-The 7-step arc below is DONE; remaining work is the Gate-1 deliverables at the bottom.
-Any new/resumed Claude session: read this + `STRATEGY.md` + `build/results/*.md` first.
+Last updated: 2026-07-13 — **model LOCKED & SHIPPED**. Qwen2.5-3B v3 GGUF: fact eval 34/37
+(gate 22/23, all 5 canonical Nigeria facts pass), arithmetic clean, sha256-verified on HF.
+Speed measured on audit-class x86: **2.75 tok/s** under the audit's scalar build — final, by
+design (see below). Any new/resumed Claude session: read this + `STRATEGY.md` +
+`build/results/*.md` first. History lives in the results docs, not here.
 
 ## Project one-liner
 ADTC-2026 entry: offline back-office copilot for African SMEs. A Qwen2.5-3B QLoRA → imatrix
 Q4_K_M GGUF (~1.93 GB), domain = `corporate_enterprise`, African use case = mobile-money
 reconciliation + Nigeria-2025 tax. Repo: https://github.com/husseinalamutu/adtc-2026
+Model: https://huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
 
-## Scoring status (what's locked)
-- **Accuracy (50%)**: arithmetic/reconciliation = excellent (re-verified post-retrain).
-  Nigeria tax facts = **FIXED**: 34/37 on the wide eval (`build/fact_eval.py`), all 5
-  canonical facts pass; v1 scored 24/37 / 1-of-5. Further gains → retrieval layer, not weights.
+## Scoring status (all axes settled)
+- **Accuracy (50%)**: arithmetic/reconciliation excellent; Nigeria facts 34/37 on
+  `build/fact_eval.py` (v1 was 24/37). Judged partly qualitatively — coherence counts.
+  Further gains → the demo's retrieval/fact-pack layer, NOT more weight drilling
+  (v4 regression + 1.5B experiment both proved the weights are at their sweet spot).
 - **Efficiency (20%)**: peak RSS ~2.0 GB → S_eff ≈ 72/100. DONE.
-- **Speed (30%)**: unmeasured. Needs the x86 Dell benchmark (see `infra/benchmark_on_windows.md`).
-- v1 model is live on HF: https://huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
+- **Speed (30%)**: 2.75 tok/s (i7-1185G7, audit-exact scalar flags). NO floor — scored
+  `S_perf = 100·TPS/TPS_max` relative to the field (website supersedes profiler README).
+  Size re-validated empirically: 1.5B doubled speed but failed declared-prompt arithmetic
+  (`build/results/model_size_tradeoff_2026-07-13.md`). Decision: accuracy > speed. CLOSED.
 
-## The current task: fix Nigeria numeric recall (retrain)
-v1 (149 thin Nigeria examples) learned advisory *style* but reverted to the base model's WRONG
-pre-2025 priors on numbers (said VAT 5.5% not 7.5%, small-co threshold ₦5M not ₦100M). Fix =
-fact-drill layer (number-first repetition) + professional-services exclusion + oversampling.
-
-### Where we are — 7-step arc, currently on step 1
-1. ⏳ **RUNNING now**: regenerate Nigeria data → `data/out/nigeria_tax.jsonl`, target 500.
-   - Cmd (resumable): `cd data && export GENERATION_PROVIDER=groq && set -a; source .env; set +a && python3 generators/nigeria_tax_gen.py --n 500 --out out/nigeria_tax.jsonl`
-   - Log: `data/nga_regen.log`. Watch: `wc -l data/out/nigeria_tax.jsonl` (done at ~500).
-2. **Rebuild dataset**: `cd data && python3 build_dataset.py --inputs out/templated.jsonl out/teacher.jsonl out/nigeria_tax.jsonl --out-dir out`
-3. **Verify**: `cd data && python3 -m pytest tests/ -q`
-4. **Prep MLX data with oversampling**: `cd build && source .venv/bin/activate && rm -rf adapters adapters_best mlx_data && python3 prepare_mlx_data.py --oversample-factor 2`
-5. **Retrain (fresh)**: `cd build && rm -f adapters/base_offset.txt && bash resume_training.sh` (detached; re-run after any teardown until it hits target iters, OR stop early when val loss plateaus ~0.4 AND facts test clean). Monitor `build/train_real.log`.
-6. **Rebuild GGUF + re-test facts**: `cd build && rm -rf fused_model gguf imatrix.dat && bash build_final.sh` then run the FACT CHECK (below). ← the make-or-break verification.
-7. **Re-upload to HF**: `cd .. && bash hf_upload_watchdog.sh` (flaky-network auto-resume; see note).
-
-### FACT CHECK (step 6 — must all be right before shipping)
-Run each through `~/adtc-local/llama.cpp/build/bin/llama-cli -m build/gguf/model-Q4_K_M.gguf -t 4 -c 1536 -n 130 -st -p "<Q>" --no-warmup`:
-- VAT rate → **7.5%**
-- small company (≤₦100M turnover, ≤₦250M assets, NOT professional services) CIT → **0%**
-- standard company CIT → **30%**
-- Development Levy → **4%** on assessable profits; **small companies exempt**
-- consulting firm under ₦100M → **still pays 30% CIT** (professional-services exclusion — the nuance the user flagged)
+## Verification tooling (use these, not ad-hoc prompts)
+- `build/fact_eval.py` — 37-question Nigeria fact eval, greedy, regex-scored; `--gate-only`
+  for the 23 shipping-gate questions. The ship bar: all 5 canonical facts + no wrong numbers.
+- `build/build_final.sh` — full 3B GGUF chain; `benchmark/telemetry_test.py` — RSS/thermal check.
+- Known model limits (documented, acceptable): def-4-style applied-threshold conclusions,
+  partial-payment carry final line, old CGT rate on individuals (cgt-3-class).
 
 ## Gotchas learned (don't rediscover these)
 - Fine-tune on the **4-bit** base (`build/models/Qwen2.5-3B-Instruct-4bit`), never bf16 — see
@@ -48,15 +36,26 @@ Run each through `~/adtc-local/llama.cpp/build/bin/llama-cli -m build/gguf/model
 - imatrix: compute on a **Q8_0 copy w/ GPU** (`04_imatrix_quantize.sh` does this) — f16-on-CPU is 2.5 hrs.
 - Data gen: free-tier is tight. Groq (`GENERATION_PROVIDER=groq`) round-robins 8b+70b; Gemini is
   the fallback. Both reset daily. Keys in `data/.env` (git-ignored).
-- Large HF up/downloads stall on this network → `hf_upload_watchdog.sh` auto-resumes via Xet chunks.
+- HF transfers (both directions) wedge on dead sockets on this network — use
+  `hf_upload_watchdog.sh` (verifies by sha256, not size) / `build/download_base_1p5b.sh`-style
+  stall watchdogs; never trust a bare long transfer.
 - Background jobs die at session teardown but `nohup`+resumable scripts survive; re-run to continue.
 - **macOS IOGPU kernel panic** (FB22091885): sustained MLX Metal load can panic the whole Mac
   ("completeMemory() prepare count underflow"); it killed a training run 2026-07-10. Workaround:
   always train via `build/train_launcher.py` (caps Metal memory 5GB / cache 1GB / wired 3.5GB) —
   `resume_training.sh` already does. Don't launch `mlx_lm.lora` bare.
+- `resume_training.sh` deletes numbered checkpoints on resume — copy anything you might want
+  into `adapters_best/` BEFORE resuming (this cost us the v3 adapter; the GGUF survives).
 - Commits: **no `Co-Authored-By: Claude` trailer** (user preference).
 
-## Remaining Gate-1 deliverables (after the retrain)
-- [ ] x86 TPS on the Dell (`infra/benchmark_on_windows.md`) → fill the slot in `submission/REPORT.md`.
-- [ ] `submission/metadata.json`: fill `team_id` + `github_handle` (user's Devpost/GitHub).
-- [ ] 2-min video; demo app (offline RAG/finance integration) for the live defense.
+## Remaining Gate-1 deliverables (due Aug 25, 2026)
+- [ ] `submission/metadata.json`: fill `team_id` + `github_handle` (user's Devpost/GitHub) —
+      submission validation will fail on the TODOs.
+- [ ] Load-bearing pairing decision: metadata claims a deterministic finance module that does
+      not exist yet — either build it (demo spine; reconciliation logic can be extracted from
+      `data/generators/templated_gen.py`) or set `load_bearing: false` and reword. User deciding.
+- [ ] Send `infra/organizer_questions_draft.md` (scalar build intentional? llama.cpp pin?
+      which speed formula governs?) — user reviews and sends.
+- [ ] 2-min video + demo app for the live defense (llama-server UI is the zero-code fallback).
+- [ ] Freeze: pin repo to submission commit; verify clean-clone `download_model.sh` +
+      `docker/run_local_emulation.sh` pass end-to-end.

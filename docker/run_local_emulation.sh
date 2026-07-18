@@ -56,9 +56,9 @@ tps = r['throughput']['tokens_per_second_generation']
 rss = r['memory']['peak_rss_mb']
 print(f"peak_rss_mb   : {rss:.0f}   (ceiling 6500, hard DQ 7168)  [trustworthy on any host]")
 if arch in ("x86_64", "amd64"):
-    verdict = "clears the 15-TPS floor" if tps >= 15 else "BELOW the 15-TPS floor"
-    print(f"tps_generation: {tps:.1f}   ✅ REAL x86 number ({arch} host) — {verdict}")
-    print("                (on a 4c/8GB target-class laptop this is within audit tolerance)")
+    print(f"tps_generation: {tps:.1f}   ✅ REAL x86 number ({arch} host)")
+    print("                (scored relative to the field: S_perf = 100*TPS/TPS_max — no floor;")
+    print("                 ~2.75 expected for the 3B under the scalar audit build)")
 else:
     print(f"tps_generation: {tps:.1f}   ⚠️  NOT representative ({arch} host, not x86) — ignore; run on an x86 PC")
 print(f"throttled     : {r['cpu_thermal']['throttled']}")

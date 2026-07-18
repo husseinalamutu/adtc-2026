@@ -21,7 +21,7 @@ Stay ≤ 3.5 GB peak RSS with margin.
 | Language | English primary (hidden prompts are English) | Drop Best Localisation; put 100% into accuracy. |
 | Cross-disciplinary pairing (load-bearing) | LLM + **offline finance/accounting engine + local regulatory corpus** | Model reasons; a deterministic ledger/tax module does the math and cites rules. This is the demo's spine. |
 | Compliance depth | **Nigeria-first, layered.** Fine-tune deep on Nigeria's 2025 Tax Reform Acts (source-grounded, see `data/README.md`) + general accountant/tax-reasoning competence across 4 other markets (Kenya/Ghana/Uganda/Tanzania). A RAG document-upload feature (user supplies their own country's tax law PDF) is a **demo-only** differentiator — never load-bearing for the sandbox score, since the sandbox never runs RAG. | Country tax law genuinely differs — one deep, checkable, high-value market (Nigeria, largest African economy) beats shallow multi-country coverage for the accuracy score; RAG shows well live but doesn't help hidden-prompt accuracy. |
-| Base model | Decide from Week-1 benchmark. Candidates: **Qwen (4B, Apache-2.0)**, **Gemma 3 4B**, 3B fallback (SmolLM3-3B / Llama-3.2-3B) | Let the 16-TPS floor pick the size. |
+| Base model | **LOCKED: Qwen2.5-3B-Instruct** (chosen from candidates via Week-1 benchmark) | Size re-validated empirically 2026-07-13: a 1.5B doubled scalar speed but failed declared-prompt arithmetic (see results/model_size_tradeoff_2026-07-13.md); with relative speed scoring, accuracy wins. |
 | Quant | **Q4_K_M with imatrix** (domain calibration set) | Community sweet spot; imatrix recovers near-free accuracy. |
 | Runtime | `llama.cpp` only, GGUF | Hard requirement; anything else auto-rejected. |
 
