@@ -24,7 +24,7 @@ runtime:
   # Mirror into submission/metadata.json's `_runtime.model_path` and the profiler self-check.
   threads: 4
   context: 2048
-  model_path: "model/adtc-sme-copilot-Q4_K_M.gguf"
+  model_path: "model/alamz-tech-sme-copilot-Q4_K_M.gguf"
 
 llamacpp:
   # Matches infra/provision_benchmark_vm.sh's LLAMACPP_COMMIT and docker/Dockerfile's

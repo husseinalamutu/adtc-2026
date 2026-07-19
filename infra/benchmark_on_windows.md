@@ -13,9 +13,9 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
 
 ## What to move to the PC
 1. **The repo** — `git clone <your repo URL>` on the PC (or copy the folder). The code is small.
-2. **The model file** — `adtc-sme-copilot-Q4_K_M.gguf` (1.93 GB). It's git-ignored, so cloning
+2. **The model file** — `alamz-tech-sme-copilot-Q4_K_M.gguf` (1.93 GB). It's git-ignored, so cloning
    does NOT bring it. Transfer it separately (USB stick is the most reliable for 1.9 GB) into:
-   `adtc-2026/submission/model/adtc-sme-copilot-Q4_K_M.gguf`
+   `adtc-2026/submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf`
    (Later we'll publish it to Hugging Face so `download_model.sh` fetches it automatically — but
    for this one-off benchmark, a USB copy is fastest.)
 

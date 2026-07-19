@@ -8,7 +8,7 @@ cd "$(dirname "$0")"
 set -a; source data/.env; set +a
 source data/.venv/bin/activate 2>/dev/null || true
 export HF_HUB_ENABLE_HF_TRANSFER=0
-REPO="HusseinAlamutu/adtc-sme-copilot-gguf"
+REPO="HusseinAlamutu/alamz-tech-sme-copilot-gguf"
 STALL_S=75
 LOG=hf_upload.log
 
@@ -19,7 +19,7 @@ committed() {
 import hashlib,os,sys
 from huggingface_hub import HfApi
 h=hashlib.sha256()
-with open("submission/model/adtc-sme-copilot-Q4_K_M.gguf","rb") as f:
+with open("submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf","rb") as f:
     for chunk in iter(lambda: f.read(1<<22), b""):
         h.update(chunk)
 local=h.hexdigest()
@@ -35,8 +35,8 @@ until committed; do
   python3 - "$REPO" >> "$LOG" 2>&1 <<'PY' &
 import os,sys
 from huggingface_hub import HfApi
-HfApi().upload_file(path_or_fileobj="submission/model/adtc-sme-copilot-Q4_K_M.gguf",
-  path_in_repo="adtc-sme-copilot-Q4_K_M.gguf",repo_id=sys.argv[1],repo_type="model",
+HfApi().upload_file(path_or_fileobj="submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf",
+  path_in_repo="alamz-tech-sme-copilot-Q4_K_M.gguf",repo_id=sys.argv[1],repo_type="model",
   token=os.environ["HF_TOKEN"])
 print("UPLOADED_OK",flush=True)
 PY

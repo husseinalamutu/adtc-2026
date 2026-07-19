@@ -4,7 +4,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/../.."   # repo root
 
-MODEL="submission/model/adtc-sme-copilot-Q4_K_M.gguf"
+MODEL="submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf"
 LLAMA_SERVER="$HOME/adtc-local/llama.cpp/build/bin/llama-server"
 
 if ! curl -s -o /dev/null http://127.0.0.1:8080/health 2>/dev/null; then

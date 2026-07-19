@@ -18,11 +18,11 @@ export HF_HUB_ENABLE_HF_TRANSFER=1
 python3 - <<'PY'
 from huggingface_hub import HfApi
 api = HfApi()
-repo = "husseinalamutu/adtc-sme-copilot-gguf"       # created if missing
+repo = "husseinalamutu/alamz-tech-sme-copilot-gguf"       # created if missing
 api.create_repo(repo, repo_type="model", private=False, exist_ok=True)
 api.upload_file(
-    path_or_fileobj="submission/model/adtc-sme-copilot-Q4_K_M.gguf",
-    path_in_repo="adtc-sme-copilot-Q4_K_M.gguf",
+    path_or_fileobj="submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf",
+    path_in_repo="alamz-tech-sme-copilot-Q4_K_M.gguf",
     repo_id=repo, repo_type="model",
 )
 print("uploaded ->", f"https://huggingface.co/{repo}")

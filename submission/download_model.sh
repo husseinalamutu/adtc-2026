@@ -8,8 +8,8 @@ set -euo pipefail
 cd "$(dirname "$0")"
 
 # --- EDIT THESE two once the HF repo exists (see submission/HUGGINGFACE_SETUP.md) ---
-HF_REPO="HusseinAlamutu/adtc-sme-copilot-gguf"   # live: huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
-HF_FILE="adtc-sme-copilot-Q4_K_M.gguf"
+HF_REPO="HusseinAlamutu/alamz-tech-sme-copilot-gguf"   # live: huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf
+HF_FILE="alamz-tech-sme-copilot-Q4_K_M.gguf"
 # -----------------------------------------------------------------------------------
 
 DEST="model/$HF_FILE"

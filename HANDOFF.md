@@ -10,7 +10,7 @@ design (see below). Any new/resumed Claude session: read this + `STRATEGY.md` +
 ADTC-2026 entry: offline back-office copilot for African SMEs. A Qwen2.5-3B QLoRA → imatrix
 Q4_K_M GGUF (~1.93 GB), domain = `corporate_enterprise`, African use case = mobile-money
 reconciliation + Nigeria-2025 tax. Repo: https://github.com/husseinalamutu/adtc-2026
-Model: https://huggingface.co/HusseinAlamutu/adtc-sme-copilot-gguf
+Model: https://huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf
 
 ## Scoring status (all axes settled)
 - **Accuracy (50%)**: arithmetic/reconciliation excellent; Nigeria facts 34/37 on
