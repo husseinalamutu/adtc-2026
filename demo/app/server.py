@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ADTC SME Copilot — demo app server (stdlib only, fully offline).
+"""ALAMZ TECH SME Copilot — demo app server (stdlib only, fully offline).
 
 Bridges the two halves of the pairing:
   - narrative:  llama-server's OpenAI-compatible API (the fine-tuned GGUF)
@@ -30,7 +30,7 @@ APP_PORT = 8090
 RULES = TaxRules()
 
 SYSTEM = (
-    "You are the ADTC SME Copilot, an offline back-office assistant for African small "
+    "You are the ALAMZ TECH SME Copilot, an offline back-office assistant for African small "
     "businesses. When VERIFIED FIGURES are provided, use ONLY those numbers — restate them "
     "exactly; never recompute or alter them. Be concise and plain-spoken."
 )
@@ -140,6 +140,6 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    print(f"ADTC SME Copilot demo -> http://127.0.0.1:{APP_PORT}  "
+    print(f"ALAMZ TECH SME Copilot demo -> http://127.0.0.1:{APP_PORT}  "
           f"(narrative via llama-server on :8080 — optional)", flush=True)
     HTTPServer(("127.0.0.1", APP_PORT), Handler).serve_forever()
