@@ -49,8 +49,10 @@ Model: https://huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf
 - Commits: **no `Co-Authored-By: Claude` trailer** (user preference).
 
 ## Remaining Gate-1 deliverables (due Aug 25, 2026)
-- [ ] `submission/metadata.json`: fill `team_id` + `github_handle` (user's Devpost/GitHub) —
-      submission validation will fail on the TODOs.
+- [x] `submission/metadata.json`: team_id `HusseinAlamutu` + github_handle `husseinalamutu` filled.
+- [x] Artifact rebranded end to end: `alamz-tech-sme-copilot` (HF repo renamed w/ redirect,
+      sha256 unchanged, model card live, profiler re-verified).
+- [x] Demo app built (`demo/app/run_demo.sh`): model narrates, module computes, citations shown.
 - [x] Load-bearing pairing: **BUILT** (`demo/finance/` — MoMo parser + double-entry ledger with
       lump-sum/carry allocation + citeable TaxRules from the verified facts file; 13 tests, the
       eval cases the models got wrong included). metadata.json's claim is now true. Next: wire
