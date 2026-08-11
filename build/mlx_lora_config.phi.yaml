@@ -1,0 +1,35 @@
+# Phi-3.5-mini-instruct 4-bit — MIT-licensed base (the licence switch away from Qwen2.5-3B,
+# which is qwen-research / non-commercial). Same LoRA recipe as the Qwen runs so the result
+# is comparable; only the base and the layer count differ.
+#
+# Phi-3.5-mini: 3.8B params, 32 decoder layers (Qwen2.5-3B had 36).
+# Target modules differ too: Phi-3 fuses attention into `qkv_proj` and MLP into `gate_up_proj`,
+# so the Qwen key list (q_proj/k_proj/v_proj/gate_proj/up_proj) would match NOTHING and train
+# an empty adapter. These keys are the Phi-3 equivalents.
+model: "models/Phi-3.5-mini-instruct-4bit"
+train: true
+fine_tune_type: lora
+optimizer: adamw
+data: "mlx_data"
+
+seed: 42
+num_layers: 32
+batch_size: 1
+iters: 1400
+val_batches: 15
+learning_rate: 1e-5
+steps_per_report: 20
+steps_per_eval: 100
+grad_accumulation_steps: 4
+resume_adapter_file: null
+adapter_path: "adapters"
+save_every: 100
+test: false
+max_seq_length: 1024
+grad_checkpoint: true
+
+lora_parameters:
+  keys: ["self_attn.qkv_proj", "self_attn.o_proj", "mlp.gate_up_proj", "mlp.down_proj"]
+  rank: 32
+  scale: 20.0
+  dropout: 0.05

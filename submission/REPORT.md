@@ -26,6 +26,22 @@ Our model is an **offline back-office copilot** for exactly this operator. It:
 The African-ness is **structural, not cosmetic**: mobile-money reconciliation and Nigerian tax law
 are things only this user needs. A generic "business assistant" could be anywhere; this cannot.
 
+## 1b. Licensing (disclosed up front)
+
+**Code: MIT. Model weights: Qwen Research Licence (non-commercial).** The submitted GGUF is a
+fine-tune of Qwen2.5-3B-Instruct, which — unusually for the Qwen2.5 family — ships under
+`qwen-research` rather than Apache-2.0. We identified this on 2026-08-11, corrected the model
+card (it had incorrectly declared Apache-2.0), and added the required "Built with Qwen"
+attribution and modification notice. See `LICENSE`.
+
+We are raising with the organizers whether a `qwen-research` base is acceptable given the
+residency/pilot track, since the licence permits non-commercial use only. Everything we built
+— the deterministic finance engine, the data generators, the three evaluation harnesses — is
+MIT and **base-model-agnostic**, so migrating to a permissively licensed base is a contained
+change rather than a rewrite: `build/mlx_lora_config.phi.yaml` is a prepared configuration for
+Phi-3.5-mini-instruct (MIT). We kept Qwen for this submission because it is the base we
+measured most thoroughly (34/37 facts); the migration is planned work, not a hypothetical.
+
 ## 2. Design decisions (and the alternatives we rejected)
 
 **Base model — Qwen2.5-3B-Instruct (4-bit).** Speed is scored *relative to the fastest submission*

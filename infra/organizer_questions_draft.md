@@ -30,6 +30,16 @@ The challenge website (africadeeptech.org/challenge-2026) states
 (absolute, capped). These give very different optimization incentives. I assume the website
 governs — could you confirm, and if so update the README to match?
 
+**4. Is a `qwen-research`-licensed base model acceptable?**
+Qwen2.5-3B-Instruct ships under the Qwen Research Licence, which permits **non-commercial use
+only** (commercial use requires a separate licence from Alibaba Cloud). The challenge page
+encourages "open-source base models (e.g. Llama, Mistral)" but does not state a licence
+requirement. Given that the grand prize includes a residency with pilot matching — i.e. a
+route to commercial deployment — could you confirm whether a non-commercial-licensed base is
+acceptable for submission, or whether entrants should use a permissively licensed base
+(Apache/MIT) or one that permits commercial use (e.g. Llama)? We have a migration prepared
+either way and would rather know now than after judging.
+
 Thanks for the great challenge — the offline-first constraint is exactly right for our market.
 
 (name / team id)

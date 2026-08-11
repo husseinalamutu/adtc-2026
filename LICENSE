@@ -1,0 +1,67 @@
+This repository contains TWO kinds of material under DIFFERENT licences.
+Please read both sections before use.
+
+===============================================================================
+1. SOURCE CODE, DATA GENERATORS, EVALS AND DOCUMENTATION  —  MIT Licence
+===============================================================================
+
+Everything authored by ALAMZ TECH in this repository — the data generators
+(`data/generators/`), the deterministic finance engine (`demo/finance/`), the
+demo application (`demo/app/`), the evaluation harnesses (`build/*_eval.py`),
+the build scripts, and the documentation — is released under the MIT Licence:
+
+Copyright (c) 2026 Hussein Alamutu / ALAMZ TECH
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+===============================================================================
+2. THE MODEL WEIGHTS  —  Qwen RESEARCH LICENCE (NON-COMMERCIAL)
+===============================================================================
+
+The submitted model (`alamz-tech-sme-copilot-Q4_K_M.gguf`, distributed via
+Hugging Face) is a QLoRA fine-tune of **Qwen2.5-3B-Instruct** and is therefore
+a derivative work governed by the Qwen RESEARCH LICENSE AGREEMENT, NOT by the
+MIT licence above.
+
+  Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT,
+  Copyright (c) Alibaba Cloud. All Rights Reserved.
+  https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/blob/main/LICENSE
+
+  Built with Qwen.
+
+Key term: the Qwen Research Licence permits use, reproduction, distribution and
+derivative works **FOR NON-COMMERCIAL PURPOSES ONLY**. Commercial use requires a
+separate licence request to Alibaba Cloud.
+
+Modifications made to the base model:
+  - QLoRA fine-tune (rank 32, all layers) on an SME back-office corpus and a
+    Nigeria-2025 tax fact base
+  - Fusion of the adapter and quantization to GGUF Q4_K_M with a
+    domain-calibrated importance matrix
+
+WHY THIS MATTERS AND WHAT IS PLANNED
+The base model was selected on measured accuracy before its licence terms were
+fully examined; the restriction was identified on 2026-08-11 and is disclosed
+here rather than left implicit. Because the deterministic engine, the data
+pipeline and the evaluation harnesses are all base-model-agnostic (MIT above),
+migrating to a permissively licensed base is a contained change: retrain,
+re-run the three gates, rebuild. `build/mlx_lora_config.phi.yaml` holds a
+prepared configuration for Phi-3.5-mini-instruct (MIT) for exactly that purpose.
+Any commercial deployment will either follow that migration or obtain a
+commercial licence from Alibaba Cloud first.
