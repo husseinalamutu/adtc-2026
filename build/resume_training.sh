@@ -48,6 +48,14 @@ if [ -f "$WEIGHTS" ]; then
   # persist the new base offset, then clear stale numbered checkpoints so within-run numbering
   # restarts cleanly from this resume (weights already captured in adapters.safetensors).
   echo "$GLOBAL_DONE" > "$OFFSET_FILE"
+  # PRESERVE FIRST. Deleting these outright cost us the v3 adapter (2026-07-13) and makes
+  # eval-based checkpoint selection impossible — archive each under its GLOBAL number.
+  mkdir -p adapters_best
+  for f in "$ADAPTER_DIR"/[0-9]*_adapters.safetensors; do
+    [ -e "$f" ] || continue
+    n=$(basename "$f" | sed -E 's/^0*([0-9]+)_adapters.*/\1/')
+    cp -n "$f" "adapters_best/global$(printf '%04d' $((BASE_OFFSET + n)))_adapters.safetensors"
+  done
   rm -f "$ADAPTER_DIR"/[0-9]*_adapters.safetensors
 else
   echo "No prior weights — fresh run to $TARGET_ITERS iters."
