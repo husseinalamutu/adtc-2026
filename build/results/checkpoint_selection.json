@@ -1,0 +1,32 @@
+[
+  {
+    "checkpoint": 1400,
+    "facts": 26,
+    "facts_total": 37,
+    "arith": 10,
+    "arith_total": 12,
+    "narration": 5,
+    "narration_total": 5,
+    "shippable": false
+  },
+  {
+    "checkpoint": 1100,
+    "facts": 23,
+    "facts_total": 37,
+    "arith": 10,
+    "arith_total": 12,
+    "narration": 4,
+    "narration_total": 5,
+    "shippable": false
+  },
+  {
+    "checkpoint": 900,
+    "facts": 26,
+    "facts_total": 37,
+    "arith": 10,
+    "arith_total": 12,
+    "narration": 4,
+    "narration_total": 5,
+    "shippable": false
+  }
+]
