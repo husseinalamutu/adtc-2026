@@ -25,6 +25,11 @@ from pathlib import Path
 BUILD = Path(__file__).resolve().parent
 LLAMA = Path.home() / "adtc-local/llama.cpp/build"
 BASE = "models/Qwen2.5-3B-Instruct-4bit"
+# mlx_lm's console scripts live beside the interpreter running this file. Resolving them
+# from sys.executable means the harness works whether or not the venv is activated —
+# a bare `mlx_lm.fuse` would be "command not found" under the system python.
+VENV_BIN = Path(sys.executable).parent
+MLX_FUSE = str(VENV_BIN / "mlx_lm.fuse")
 
 # v3, the incumbent — a new checkpoint must beat BOTH of these to ship.
 GATE_FACTS = 34
@@ -43,7 +48,7 @@ def build_gguf(adapter: Path, workdir: Path) -> Path:
     f16, q8, q4 = gguf / "f16.gguf", gguf / "q8.gguf", gguf / "model-Q4_K_M.gguf"
     imatrix = workdir / "imatrix.dat"
 
-    run(["mlx_lm.fuse", "--model", BASE, "--adapter-path", str(adapter),
+    run([MLX_FUSE, "--model", BASE, "--adapter-path", str(adapter),
          "--dequantize", "--save-path", str(fused)])
     run([sys.executable, str(Path.home() / "adtc-local/llama.cpp/convert_hf_to_gguf.py"),
          str(fused), "--outfile", str(f16), "--outtype", "f16"])
