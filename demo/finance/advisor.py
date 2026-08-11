@@ -17,6 +17,7 @@ from datetime import date
 from decimal import Decimal, ROUND_HALF_UP
 
 from . import anomalies as anomaly_mod
+from . import inventory as inventory_mod
 from .analytics import business_health, customers_owing, prev_month_bounds, period_summary
 from .forecast import project
 
@@ -24,6 +25,8 @@ TWO = Decimal("0.01")
 
 # Spend the operator can realistically throttle within a month without stopping trading.
 DISCRETIONARY = {"Transport", "Airtime & data", "Entertainment", "Miscellaneous", "Bank charges"}
+# Slow stock clears at a discount; assume 70% of book cost is realisable in a hurry.
+DEAD_STOCK_RECOVERY = Decimal("0.70")
 
 
 def _d(x) -> Decimal:
@@ -108,7 +111,11 @@ def recommend(store, as_of: date, committed_obligations: Decimal | None = None,
                     impact=excess, confidence="medium",
                     evidence=f"paid above this supplier's usual rate on {a.txn_date}"))
 
-    # 3. Discretionary spending that actually grew — controllable within the month.
+    # 3. Cash frozen in stock that isn't selling — real money, but only realisable at a
+    #    discount, so it ranks below cash that is simply owed to the business.
+    recs += _dead_stock(store, as_of)
+
+    # 4. Discretionary spending that actually grew — controllable within the month.
     recs += _discretionary_reductions(store, as_of)
 
     recs.sort(key=lambda r: (r.confidence != "high", -r.impact))
@@ -127,6 +134,29 @@ def _excess_over_usual(a) -> Decimal:
     if not m:
         return Decimal("0.00")
     return _d(a.amount - Decimal(m.group(1).replace(",", "")))
+
+
+def _dead_stock(store, as_of: date) -> list[Recommendation]:
+    """Stock that hasn't moved in months is working capital sitting on a shelf.
+
+    Impact is discounted: clearing slow stock realistically happens below cost, so
+    claiming the full book value would overstate the cash a sale would actually raise.
+    """
+    if not store.has_stock_data():
+        return []
+    pos = inventory_mod.position(store, as_of)
+    out = []
+    for sku in pos.dead_skus[:2]:
+        realisable = _d(sku.value * DEAD_STOCK_RECOVERY)
+        if realisable > 0:
+            idle = sku.days_idle(as_of)
+            out.append(Recommendation(
+                action=f"Clear slow-moving stock: {sku.description}",
+                impact=realisable, confidence="medium",
+                evidence=(f"{sku.quantity_on_hand} units worth NGN {sku.value:,} at cost, "
+                          + (f"unsold for {idle} days" if idle is not None else "never sold")
+                          + f"; assumes a {int((1 - DEAD_STOCK_RECOVERY) * 100)}% clearance discount")))
+    return out
 
 
 def _discretionary_reductions(store, as_of: date) -> list[Recommendation]:

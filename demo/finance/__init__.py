@@ -11,16 +11,16 @@ arithmetic and rule application the model must never guess:
 
 Stdlib only; Decimal money; every public function is pure and unit-tested.
 """
-from . import analytics, sample_data
+from . import analytics, inventory, sample_data
 from .analytics import business_health, cash_position, customers_owing, period_summary
 from .momo_parser import Transaction, parse_statement
-from .store import InvoiceRow, Store, Txn
+from .store import InvoiceRow, StockMove, Store, Txn
 from .ledger import Invoice, Allocation, Ledger, reconcile_exact, allocate_lump_sum
 from .tax_rules import TaxRules
 
 __all__ = [
     "Transaction", "parse_statement",
-    "Store", "Txn", "InvoiceRow", "sample_data", "analytics",
+    "Store", "Txn", "InvoiceRow", "StockMove", "sample_data", "analytics", "inventory",
     "business_health", "cash_position", "customers_owing", "period_summary",
     "Invoice", "Allocation", "Ledger", "reconcile_exact", "allocate_lump_sum",
     "TaxRules",

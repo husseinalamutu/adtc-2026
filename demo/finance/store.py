@@ -38,8 +38,19 @@ CREATE TABLE IF NOT EXISTS invoices (
     due_date    TEXT,
     paid        TEXT NOT NULL DEFAULT '0'
 );
+CREATE TABLE IF NOT EXISTS stock_movements (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    sku        TEXT NOT NULL,
+    description TEXT,
+    move_date  TEXT NOT NULL,
+    quantity   INTEGER NOT NULL,          -- always positive
+    unit_cost  TEXT NOT NULL,             -- Decimal string; cost, not sale price
+    direction  TEXT NOT NULL CHECK (direction IN ('in','out')),
+    UNIQUE (sku, move_date, quantity, unit_cost, direction)
+);
 CREATE INDEX IF NOT EXISTS idx_txn_date ON transactions (txn_date);
 CREATE INDEX IF NOT EXISTS idx_txn_cat  ON transactions (category);
+CREATE INDEX IF NOT EXISTS idx_stock_sku ON stock_movements (sku);
 """
 
 
@@ -56,6 +67,22 @@ class Txn:
     direction: str          # 'in' (money received) | 'out' (money spent)
     category: str | None
     counterparty: str | None
+
+
+@dataclass(frozen=True)
+class StockMove:
+    """One movement of goods, valued at COST (never sale price) — this is the
+    working-capital view of stock, not an operational stock-control record."""
+    sku: str
+    description: str
+    move_date: date
+    quantity: int
+    unit_cost: Decimal
+    direction: str          # 'in' = purchased into stock, 'out' = sold/consumed
+
+    @property
+    def value(self) -> Decimal:
+        return _d(self.unit_cost * self.quantity)
 
 
 @dataclass(frozen=True)
@@ -177,6 +204,36 @@ class Store:
                            Decimal(r["paid"]))
                 for r in self.conn.execute("SELECT * FROM invoices ORDER BY issued_date")]
         return [i for i in rows if i.outstanding > 0] if unpaid_only else rows
+
+    def add_stock_movements(self, rows) -> int:
+        added = 0
+        for m in rows:
+            cur = self.conn.execute(
+                "INSERT OR IGNORE INTO stock_movements "
+                "(sku, description, move_date, quantity, unit_cost, direction) VALUES (?,?,?,?,?,?)",
+                (m.sku, m.description, m.move_date.isoformat(), int(m.quantity),
+                 str(_d(m.unit_cost)), m.direction))
+            added += cur.rowcount
+        self.conn.commit()
+        return added
+
+    def stock_movements(self, start: date | None = None, end: date | None = None,
+                        direction: str | None = None) -> list[StockMove]:
+        sql = "SELECT * FROM stock_movements WHERE 1=1"
+        args: list = []
+        if start:
+            sql += " AND move_date >= ?"; args.append(start.isoformat())
+        if end:
+            sql += " AND move_date <= ?"; args.append(end.isoformat())
+        if direction:
+            sql += " AND direction = ?"; args.append(direction)
+        sql += " ORDER BY move_date, id"
+        return [StockMove(r["sku"], r["description"], _as_date(r["move_date"]), r["quantity"],
+                          Decimal(r["unit_cost"]), r["direction"])
+                for r in self.conn.execute(sql, args)]
+
+    def has_stock_data(self) -> bool:
+        return bool(self.conn.execute("SELECT 1 FROM stock_movements LIMIT 1").fetchone())
 
     def date_range(self) -> tuple[date, date] | None:
         r = self.conn.execute("SELECT MIN(txn_date) a, MAX(txn_date) b FROM transactions").fetchone()

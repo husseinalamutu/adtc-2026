@@ -16,7 +16,16 @@ import random
 from datetime import date, timedelta
 from decimal import Decimal
 
-from .store import InvoiceRow, Txn
+from .store import InvoiceRow, StockMove, Txn
+
+# SKUs the sample business trades. "Imported floor tiles" is deliberately DEAD STOCK —
+# bought early, barely sold, so the inventory layer has trapped capital to find.
+SKUS = [
+    ("CEM-50", "50kg cement bags", 4_800, 6_500, True),
+    ("ROD-12", "12mm iron rods", 6_200, 8_400, True),
+    ("PVC-110", "110mm PVC pipes", 3_100, 4_300, True),
+    ("TIL-IMP", "Imported floor tiles", 22_000, 29_000, False),   # the dead one
+]
 
 START = date(2026, 1, 1)
 MONTHS = 6
@@ -108,6 +117,34 @@ def build(seed: int = 7) -> tuple[list[Txn], list[InvoiceRow]]:
     return txns, invoices
 
 
-def load_into(store) -> tuple[int, int]:
+def build_stock(seed: int = 7) -> list[StockMove]:
+    """Stock movements at COST, consistent with the trading above: regular SKUs are bought
+    and sold through the period; the imported tiles are bought once and never move again,
+    leaving real capital stranded for the inventory layer to surface."""
+    rng = random.Random(seed + 100)
+    moves: list[StockMove] = []
+    for sku, desc, cost, _price, active in SKUS:
+        # opening purchase for every SKU
+        moves.append(StockMove(sku, desc, START + timedelta(days=2),
+                               rng.randint(40, 90), Decimal(cost), "in"))
+        if not active:
+            # one small early sale, then nothing — dead stock
+            moves.append(StockMove(sku, desc, START + timedelta(days=9),
+                                   3, Decimal(cost), "out"))
+            continue
+        for m in range(MONTHS):
+            mstart = _month_start(m)
+            if rng.random() < 0.7:
+                moves.append(StockMove(sku, desc, mstart + timedelta(days=rng.randint(1, 10)),
+                                       rng.randint(20, 60), Decimal(cost), "in"))
+            for _ in range(rng.randint(2, 5)):
+                moves.append(StockMove(sku, desc, mstart + timedelta(days=rng.randint(0, 27)),
+                                       rng.randint(3, 18), Decimal(cost), "out"))
+    moves.sort(key=lambda m: m.move_date)
+    return moves
+
+
+def load_into(store) -> tuple[int, int, int]:
     txns, invoices = build()
-    return store.add_transactions(txns), store.add_invoices(invoices)
+    return (store.add_transactions(txns), store.add_invoices(invoices),
+            store.add_stock_movements(build_stock()))
