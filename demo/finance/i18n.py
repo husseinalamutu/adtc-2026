@@ -63,30 +63,31 @@ HA = {
     "confirm_professional": "Ka tabbatar da cikakken bayani daga FIRS ko akanta mai lasisi.",
 }
 
-# ⚠️ DRAFT — native Igbo review still required, but the FINANCIAL VOCABULARY is no longer
-# guesswork: terms marked [G] are taken from Enweonye, "A Bilingual Glossary of Banking and
-# Finance Terms", IGBOSCHOLARS Journal Vol 1 No 1 (2013), supplied by the project owner.
-# What the glossary cannot supply is sentence construction and register — that is exactly
-# what the native reviewer must still check, so `_reviewed` stays False.
+# Igbo — REVIEWER CORRECTIONS APPLIED (2026-08-11). 10 of 14 strings differ from the AI
+# draft, including register fixes a glossary could not give us (e.g. "akaụntanti nwere
+# ikike" for a licensed accountant, in place of the scholarly "ọgbakọego"). `_reviewed`
+# stays False only until the project owner confirms these came from a native speaker —
+# flipping it is what makes the language visible to users and judges.
 IG = {
     "_reviewed": False,
     "_name": "Igbo",
-    "_source": "Enweonye, Bilingual Glossary of Banking and Finance Terms, IGBOSCHOLARS J. 1(1) 2013",
-    "revenue": "Ego batara: {currency} {amount}",                 # [G] Income = ego batara
-    "expenses": "Imefu ego: {currency} {amount}",                 # [G] Out go = imefu ego
-    "net": "Uru fọdụrụ: {currency} {amount}",                     # [G] Balance = ego fọdụrụ
-    "cash_position": "Ego dị n'aka: {currency} {amount}",
-    "receivables": "Ụgwọ a ji gị: {currency} {amount} "           # [G] Owe = iji ụgwọ
-                   "(ụgwọ e ji eji: {currency} {overdue})",       # [G] Arrears = ụgwọ e ji eji
-    "margin": "Pasent uru: {pct}%",
-    "up_pct": "rịgoro {pct}% karịa ọnwa gara aga",
-    "down_pct": "dara {pct}% site n'ọnwa gara aga",
-    "chase_customer": "Chọọ ụgwọ n'aka {name} — {currency} {amount}, ụbọchị {days} gafeela",
-    "duplicate_payment": "O nwere ike ị kwụrụ {currency} {amount} ugboro abụọ nye {name}",
-    "shortfall": "A na-atụ anya ụkọ ego n'ọnwa na-abịa: {currency} {amount}",
-    "covered": "A na-atụ anya na ego ga-ezu maka ọnwa na-abịa",
-    "no_issues": "Ọ dịghị ihe ijuanya dị na azụmahịa gị.",        # [G] Commerce = azụmaazụ
-    "confirm_professional": "Gakwuru FIRS ma ọ bụ ọgbakọego maka nkwenye.",  # [G] Accountant
+    "_source": ("Reviewer corrections applied 2026-08-11 (10 of 14 strings changed from the "
+                "AI draft); financial vocabulary cross-checked against Enweonye, Bilingual "
+                "Glossary of Banking and Finance Terms, IGBOSCHOLARS J. 1(1) 2013"),
+    "revenue": "Ego batara: {currency} {amount}",
+    "expenses": "Mmefu ego: {currency} {amount}",
+    "net": "Ego fọdụrụ: {currency} {amount}",
+    "cash_position": "Ego dị n’aka: {currency} {amount}",
+    "receivables": "Ego e ji gị: {currency} {amount} (gafere oge: {currency} {overdue})",
+    "margin": "Oke uru: {pct}%",
+    "up_pct": "bawanyere {pct}% karịa ọnwa gara aga",
+    "down_pct": "belatara {pct}% karịa ọnwa gara aga",
+    "chase_customer": "Chetara {name} ụgwọ: {currency} {amount}, ụbọchị {days} karịrị oge",
+    "duplicate_payment": "O nwere ike na a kwụrụ {name} {currency} {amount} ugboro abụọ",
+    "shortfall": "A na-atụ anya ụkọ ego n’ọnwa na-abịa: {currency} {amount}",
+    "covered": "A na-atụ anya na ego ga-ezu ịkwụ ụgwọ ọnwa na-abịa",
+    "no_issues": "Ọ dịghị ihe pụrụ iche na azụmahịa gị.",
+    "confirm_professional": "Gakwuru FIRS ma ọ bụ akaụntanti nwere ikike maka nkwenye.",
 }
 
 # ⚠️ UNVERIFIED DRAFT — native Yoruba review required before use.
