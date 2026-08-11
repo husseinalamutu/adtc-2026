@@ -1,3 +1,8 @@
+> ⚠️ **SUPERSEDED — THE DIAGNOSIS BELOW IS WRONG.** The fact collapse was not gradient
+> dilution; three Nigeria drill families had been assigned wholesale to the holdout
+> split and were absent from training entirely. See `v5_split_bug_2026-08-11.md`.
+> Kept unedited as the audit trail of a confident, quantified, incorrect analysis.
+
 # v5 — the gate held, and taught us the dilution law (2026-08-11)
 
 ## Result: NO v5 checkpoint shipped. v3 remains the submission model.
