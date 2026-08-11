@@ -6,7 +6,7 @@ The split is BY SCENARIO FAMILY, not random-by-row: every `scenario_family` valu
 assigned wholesale to either train or holdout. This means the holdout set contains
 business-type/topic/country *combinations* the fine-tune never saw at all, not just
 different random numbers plugged into a seen template — a much closer proxy for the
-2 hidden judge prompts (organizers write fresh prompts in-domain, not just fresh numbers).
+3 hidden judge prompts (organizers write fresh prompts in-domain, not just fresh numbers).
 
 Usage:
     python build_dataset.py --inputs out/templated.jsonl out/teacher.jsonl --out-dir out
@@ -80,12 +80,39 @@ def main():
     for r in filtered:
         by_family[r.get("scenario_family", "unknown")].append(r)
 
+    # A FACT DRILL FAMILY MUST NEVER BE HELD OUT.
+    # Holding out a *scenario* family tests generalisation to an unseen situation, which is
+    # the point of this split. Holding out a *fact drill* family removes the fact from
+    # training altogether — and a model cannot recall a tax rate it was never shown.
+    # This bit us hard (2026-08-11): adding the arith::/intel:: families reshuffled the
+    # split and moved the development-levy, personal-income-tax and withholding-tax drills
+    # wholesale into holdout. Fact accuracy fell 34/37 -> 26/37, and two retrains chasing
+    # an "exposure dilution" theory failed because the data simply was not there.
     families = sorted(by_family.keys())
     rng = random.Random(args.seed)
     rng.shuffle(families)
-    n_holdout_families = max(1, int(len(families) * HOLDOUT_FAMILY_FRACTION))
-    holdout_families = set(families[:n_holdout_families])
-    train_families = set(families[n_holdout_families:])
+    holdout_eligible = [f for f in families if "_drill::" not in f]
+    pinned_to_train = [f for f in families if "_drill::" in f]
+
+    # STRATIFY by category as well. Picking holdout families from one global pool can leave
+    # a whole category unrepresented purely by luck — the first fix here did exactly that,
+    # emptying Nigeria out of the holdout set and silently voiding the overfit guard.
+    # Every category with more than one eligible family contributes at least one.
+    cat_of = {f: by_family[f][0].get("category", "unknown") for f in holdout_eligible}
+    by_cat: dict[str, list[str]] = defaultdict(list)
+    for f in holdout_eligible:
+        by_cat[cat_of[f]].append(f)
+
+    holdout_families: set[str] = set()
+    for cat, fams in sorted(by_cat.items()):
+        if len(fams) > 1:
+            holdout_families.add(fams[0])          # already shuffled, so this is a random pick
+    target = max(1, int(len(holdout_eligible) * HOLDOUT_FAMILY_FRACTION))
+    for f in holdout_eligible:                     # top up to the target fraction
+        if len(holdout_families) >= target:
+            break
+        holdout_families.add(f)
+    train_families = (set(holdout_eligible) - holdout_families) | set(pinned_to_train)
 
     train_rows = [r for f in train_families for r in by_family[f]]
     holdout_rows = [r for f in holdout_families for r in by_family[f]]
