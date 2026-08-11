@@ -1,9 +1,9 @@
 # Session handoff — live state & how to continue
 
 Last updated: 2026-08-11. **Shipped model = v3** (Qwen2.5-3B QLoRA → imatrix Q4_K_M, 1.93 GB,
-on HF, sha256-verified). A v5 retrain was attempted and **rejected by the gates**; v5b is
-running. The product around the model grew substantially this session: a six-layer offline
-financial intelligence engine, a demo app, and a multilingual output layer.
+on HF, sha256-verified). The retrain programme is **CLOSED**: v5, v5b and v5c were all
+rejected by the gates. The product around the model grew substantially: a six-layer offline
+financial intelligence engine, a demo app, and Hausa + Igbo output.
 
 Read this + `STRATEGY.md` + `build/results/*.md` first. History lives in the results docs.
 
@@ -34,26 +34,39 @@ Ship rule: **facts ≥ 34 AND arithmetic > 9.** Nothing ships on validation loss
 worse facts: v4 (val-selected, 34→31) and v5 (best val of any run, 0.314, facts 34→26).
 Both were caught only because the gates existed and were fixed in advance.
 
-**Fact recall is a function of exposure share** and fails least-reinforced-first:
-| run | Nigeria share of mix | facts |
-|---|---|---|
-| v3 | ~48% (780×3) | 34/37 |
-| v5 | ~26% (642×2 + 1,100 new drills) | 26/37 |
-| v5b | ~39% (642×4) | running |
-Full analysis: `build/results/v5_dilution_finding_2026-08-11.md`.
+**Check the DATA before re-running the model.** v5's fact collapse (34→26) was diagnosed as
+"exposure dilution", which was **wrong** and cost a full retrain. The real cause: adding new
+scenario families silently moved three Nigeria drill families wholesale into holdout, so
+those facts had zero training data. A share effect degrades broadly; ours was surgical
+(3 topics, 6 of 8 lost questions) — the disproof was visible before the wasted run.
+
+Retrain results, all gated out:
+| run | facts | arith | narration | note |
+|---|---|---|---|---|
+| **v3 (shipped)** | **34** | 9 | 5 | incumbent |
+| v5 / v5b | 26 / 27 | 10 / 11 | 5 | drill data missing (the bug) |
+| v5c @1200 | 33 | 10 | 5 | best challenger — missed by one fact |
+| v5c @1000 / @1400 | 27 / 32 | 9 / 10 | 5 / 3 | under- and over-trained |
+
+~1200 iters is this recipe's optimum; past it the *fragile* skills go first (narration
+5/5 → 3/5). **Do not retrain again without a new idea** — the ceiling is measured.
+Full account: `build/results/retrain_conclusion_2026-08-11.md` and `v5_split_bug_2026-08-11.md`.
 
 ## What exists now (beyond the model)
-- `demo/finance/` — deterministic engine, **70 tests**, stdlib only: `store` (SQLite, Decimal
+- `demo/finance/` — deterministic engine, **71 tests**, stdlib only: `store` (SQLite, Decimal
   money), `ledger` (double-entry, carry allocation), `analytics` (P&L/margin/aging/health),
   `inventory` (weighted-average COGS, turnover, cash-conversion cycle, dead stock),
   `anomalies` (robust z-score, duplicates, price jumps — 371 txns → 6 flagged), `advisor`
   (ranked interventions), `tax_rules` (citeable, from the same verified fact base), `i18n`.
 - `demo/app/` — offline app: Ask-my-business (health / anomalies / forecast / stock / actions),
   reconcile, tax, quote, CSV import. Engine computes, model narrates. `bash demo/app/run_demo.sh`
-- `i18n.py` — Hausa + Igbo (+ Yoruba drafted, NOT claimed). Figures identical across languages
-  by construction. **Unreviewed catalogues are gated in code** (`available()` returns `["en"]`)
-  until a native reviewer flips `_reviewed`. Igbo vocabulary is sourced from a published
-  glossary (`demo/finance/sources/`, IGBOSCHOLARS 2013). Review sheet: `TRANSLATION_REVIEW.md`.
+- `i18n.py` — **Hausa + Igbo are native-reviewed and LIVE** (`available()` → `['en','ha','ig']`);
+  Yoruba is drafted but gated and NOT claimed. Reviewers changed 11/14 (ha) and 10/14 (ig)
+  strings; both independently fixed the same profit/balance conflation on the Net line.
+  Igbo vocabulary cross-checked against a published glossary (`demo/finance/sources/`,
+  IGBOSCHOLARS 2013). Figures are identical across languages by construction (tested).
+  **These languages live in the APP, not the model** — `metadata.json` stays
+  `language_scope: ["en"]` so hidden prompts are not invited in a language the GGUF can't serve.
 - Data: 5,216 examples, **3 of 5 generators fully deterministic**; 139 data tests incl. a
   **contamination guard** (3 eval questions were found verbatim in training and rephrased).
 
