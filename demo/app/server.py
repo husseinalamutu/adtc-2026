@@ -31,6 +31,7 @@ from finance.analytics import business_health
 from finance.anomalies import as_ground_truth as anomalies_text
 from finance.anomalies import detect
 from finance.forecast import project
+from finance.inventory import cash_conversion_cycle, position
 
 LLAMA_URL = "http://127.0.0.1:8080/v1/chat/completions"
 APP_PORT = 8090
@@ -131,6 +132,7 @@ BUSINESS_ASKS = {
     "anomalies": "Is anything unusual in my transactions?",
     "forecast": "Will I have enough cash next month?",
     "actions": "What should I do about it?",
+    "stock": "How much of my cash is tied up in stock?",
 }
 
 
@@ -151,6 +153,13 @@ def do_business(p: dict) -> dict:
     elif kind == "forecast":
         verified, localised = project(store, as_of, committed_obligations=obligations
                                       ).as_ground_truth("NGN"), None
+    elif kind == "stock":
+        inv = position(store, as_of, as_of.replace(day=1))
+        ccc = cash_conversion_cycle(store, as_of)
+        extra = ("" if ccc["cash_conversion_days"] is None else
+                 f"\nCash conversion cycle: {ccc['cash_conversion_days']:.0f} days "
+                 f"({ccc['note']})")
+        verified, localised = inv.as_ground_truth("NGN") + extra, None
     else:
         verified, localised = recommend(store, as_of, committed_obligations=obligations
                                         ).as_ground_truth("NGN"), None
