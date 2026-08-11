@@ -1,4 +1,7 @@
-# Translation review sheet — Hausa, Igbo, Yoruba
+# Translation review sheet — Hausa and Igbo
+
+*(Yoruba is drafted in the code but NOT claimed for this submission — the
+African-language claim covers Hausa and Igbo only.)*
 
 **For the native reviewer.** These strings are what an SME operator reads in the app.
 They were drafted by an English-language AI and are **unverified** — assume every line
@@ -46,6 +49,14 @@ Word order may move a placeholder anywhere in the sentence; that is fine.
 | confirm_professional | Confirm specifics with FIRS or a licensed accountant. | Ka tabbatar da cikakken bayani daga FIRS ko akanta mai lasisi. | |
 
 ## Igbo (`ig`)
+
+> **Financial vocabulary here is sourced, not guessed.** Terms are drawn from Enweonye,
+> *A Bilingual Glossary of Banking and Finance Terms*, IGBOSCHOLARS Journal Vol 1 No 1
+> (2013) — scans in `demo/finance/sources/`. Confirmed from that glossary: Income =
+> *ego batara*, Out go = *imefu ego*, Owe = *iji ụgwọ*, Arrears = *ụgwọ e ji eji*,
+> Accountant = *ọgbakọego*, Taxation = *inye ụtụ*, Balance = *ego fọdụrụ*.
+> **What the glossary cannot give us is sentence construction, agreement and register** —
+> that is what we need you for. Please focus there rather than on individual nouns.
 
 | Key | English (verified) | Draft — UNVERIFIED | Your correction |
 |---|---|---|---|

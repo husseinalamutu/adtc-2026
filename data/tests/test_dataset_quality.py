@@ -219,7 +219,7 @@ class TestBuiltDatasetSplit:
 
     def test_holdout_covers_multiple_categories(self):
         """Overfit guard: the holdout set shouldn't accidentally be all one category —
-        that would make it a weak proxy for the 2 hidden judge prompts, which span the domain."""
+        that would make it a weak proxy for the 3 hidden judge prompts, which span the domain."""
         train, holdout = self._require_built()
         holdout_categories = {r["category"] for r in holdout}
         assert len(holdout_categories) >= 2, f"holdout only covers: {holdout_categories}"

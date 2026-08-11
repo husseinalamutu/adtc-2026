@@ -63,15 +63,21 @@ HA = {
     "confirm_professional": "Ka tabbatar da cikakken bayani daga FIRS ko akanta mai lasisi.",
 }
 
-# ⚠️ UNVERIFIED DRAFT — native Igbo review required before use.
+# ⚠️ DRAFT — native Igbo review still required, but the FINANCIAL VOCABULARY is no longer
+# guesswork: terms marked [G] are taken from Enweonye, "A Bilingual Glossary of Banking and
+# Finance Terms", IGBOSCHOLARS Journal Vol 1 No 1 (2013), supplied by the project owner.
+# What the glossary cannot supply is sentence construction and register — that is exactly
+# what the native reviewer must still check, so `_reviewed` stays False.
 IG = {
     "_reviewed": False,
     "_name": "Igbo",
-    "revenue": "Ego batara: {currency} {amount}",
-    "expenses": "Ego emefuru: {currency} {amount}",
-    "net": "Uru fọdụrụ: {currency} {amount}",
+    "_source": "Enweonye, Bilingual Glossary of Banking and Finance Terms, IGBOSCHOLARS J. 1(1) 2013",
+    "revenue": "Ego batara: {currency} {amount}",                 # [G] Income = ego batara
+    "expenses": "Imefu ego: {currency} {amount}",                 # [G] Out go = imefu ego
+    "net": "Uru fọdụrụ: {currency} {amount}",                     # [G] Balance = ego fọdụrụ
     "cash_position": "Ego dị n'aka: {currency} {amount}",
-    "receivables": "Ego a ji gị: {currency} {amount} (gafeela oge: {currency} {overdue})",
+    "receivables": "Ụgwọ a ji gị: {currency} {amount} "           # [G] Owe = iji ụgwọ
+                   "(ụgwọ e ji eji: {currency} {overdue})",       # [G] Arrears = ụgwọ e ji eji
     "margin": "Pasent uru: {pct}%",
     "up_pct": "rịgoro {pct}% karịa ọnwa gara aga",
     "down_pct": "dara {pct}% site n'ọnwa gara aga",
@@ -79,8 +85,8 @@ IG = {
     "duplicate_payment": "O nwere ike ị kwụrụ {currency} {amount} ugboro abụọ nye {name}",
     "shortfall": "A na-atụ anya ụkọ ego n'ọnwa na-abịa: {currency} {amount}",
     "covered": "A na-atụ anya na ego ga-ezu maka ọnwa na-abịa",
-    "no_issues": "Ọ dịghị ihe ijuanya dị na azụmahịa gị.",
-    "confirm_professional": "Gakwuru FIRS ma ọ bụ onye ọkachamara n'ọgụgụ ego maka nkwenye.",
+    "no_issues": "Ọ dịghị ihe ijuanya dị na azụmahịa gị.",        # [G] Commerce = azụmaazụ
+    "confirm_professional": "Gakwuru FIRS ma ọ bụ ọgbakọego maka nkwenye.",  # [G] Accountant
 }
 
 # ⚠️ UNVERIFIED DRAFT — native Yoruba review required before use.
