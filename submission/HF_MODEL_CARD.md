@@ -1,5 +1,7 @@
 ---
-license: apache-2.0
+license: other
+license_name: qwen-research
+license_link: https://huggingface.co/Qwen/Qwen2.5-3B-Instruct/blob/main/LICENSE
 base_model: Qwen/Qwen2.5-3B-Instruct
 language:
   - en
@@ -15,6 +17,13 @@ tags:
 ---
 
 # ALAMZ TECH SME Copilot (GGUF, Q4_K_M)
+
+> **Built with Qwen.** This model is a fine-tune of Qwen2.5-3B-Instruct and is therefore
+> governed by the **Qwen RESEARCH LICENSE AGREEMENT** (non-commercial use only; commercial
+> use requires a separate licence from Alibaba Cloud). Modifications made: QLoRA fine-tune
+> on an SME back-office / Nigeria-2025-tax corpus, then imatrix Q4_K_M quantization.
+> *Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT, Copyright (c) Alibaba Cloud.
+> All Rights Reserved.*
 
 An **offline back-office copilot for African small businesses** — invoices and quotes,
 mobile-money (MoMo/M-Pesa) reconciliation, and **Nigeria's 2025 Tax Reform Acts** —
