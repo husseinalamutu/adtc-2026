@@ -17,13 +17,20 @@ import json
 import sys
 import urllib.error
 import urllib.request
+from datetime import date
 from decimal import Decimal
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR.parent))  # demo/ -> import finance
-from finance import Invoice, TaxRules, allocate_lump_sum, parse_statement, reconcile_exact
+from finance import (Invoice, Store, TaxRules, allocate_lump_sum, i18n, parse_statement,
+                     reconcile_exact, sample_data)
+from finance.advisor import recommend
+from finance.analytics import business_health
+from finance.anomalies import as_ground_truth as anomalies_text
+from finance.anomalies import detect
+from finance.forecast import project
 
 LLAMA_URL = "http://127.0.0.1:8080/v1/chat/completions"
 APP_PORT = 8090
@@ -107,7 +114,77 @@ def do_quote(p: dict) -> dict:
                                   verified)}
 
 
-ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote}
+def _business_store() -> Store:
+    """The demo's books. Loaded once with the generated sample business so the app has
+    something real to reason over; `import_transactions_csv` replaces it with the
+    operator's own data."""
+    global _STORE
+    if _STORE is None:
+        _STORE = Store(":memory:")
+        sample_data.load_into(_STORE)
+    return _STORE
+
+
+_STORE: Store | None = None
+BUSINESS_ASKS = {
+    "health": "What happened to my business this month?",
+    "anomalies": "Is anything unusual in my transactions?",
+    "forecast": "Will I have enough cash next month?",
+    "actions": "What should I do about it?",
+}
+
+
+def do_business(p: dict) -> dict:
+    """The 'Ask My Business' scenarios — engine computes, model explains."""
+    kind = p.get("kind", "health")
+    as_of = date.fromisoformat(p.get("as_of") or "2026-06-15")
+    obligations = _dec(p["obligations"]) if p.get("obligations") else None
+    store = _business_store()
+    lang = p.get("lang", "en")
+
+    if kind == "health":
+        h = business_health(store, as_of)
+        verified = h.as_ground_truth("NGN")
+        localised = i18n.render_health(h, lang) if lang != "en" else None
+    elif kind == "anomalies":
+        verified, localised = anomalies_text(detect(store)), None
+    elif kind == "forecast":
+        verified, localised = project(store, as_of, committed_obligations=obligations
+                                      ).as_ground_truth("NGN"), None
+    else:
+        verified, localised = recommend(store, as_of, committed_obligations=obligations
+                                        ).as_ground_truth("NGN"), None
+
+    return {"verified": verified, "localised": localised,
+            "txn_count": len(store.transactions()),
+            "narrative": _narrate(BUSINESS_ASKS.get(kind, BUSINESS_ASKS["health"]), verified)}
+
+
+def do_import(p: dict) -> dict:
+    """Replace the demo books with the operator's own pasted CSV."""
+    global _STORE
+    import csv as _csv
+    import io
+    text = (p.get("csv") or "").strip()
+    if not text:
+        raise ValueError("no CSV content provided")
+    rows = list(_csv.DictReader(io.StringIO(text)))
+    if not rows:
+        raise ValueError("CSV had a header but no data rows")
+
+    tmp = Path(APP_DIR / "_uploaded.csv")
+    tmp.write_text(text, encoding="utf-8")
+    _STORE = Store(":memory:")
+    n = _STORE.import_transactions_csv(tmp)
+    tmp.unlink(missing_ok=True)
+    rng = _STORE.date_range()
+    return {"verified": f"Imported {n} transactions"
+                        + (f" covering {rng[0]} to {rng[1]}." if rng else "."),
+            "narrative": None, "txn_count": n}
+
+
+ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
+          "/api/business": do_business, "/api/import": do_import}
 
 
 class Handler(SimpleHTTPRequestHandler):

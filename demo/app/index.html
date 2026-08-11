@@ -50,10 +50,39 @@
 </header>
 <main>
   <nav>
-    <button data-tab="reconcile" class="active">Reconcile a payment</button>
+    <button data-tab="business" class="active">Ask my business</button>
+    <button data-tab="reconcile">Reconcile a payment</button>
     <button data-tab="tax">Tax question</button>
     <button data-tab="quote">Make a quote</button>
   </nav>
+
+  <!-- ASK MY BUSINESS -->
+  <section class="card tab" id="tab-business">
+    <p class="muted">Your books are on this laptop. The engine reads every transaction and
+    computes the answer; the copilot explains it. <span id="bz-count"></span></p>
+    <div class="chips">
+      <button onclick="biz('health')">What happened this month?</button>
+      <button onclick="biz('anomalies')">Anything unusual?</button>
+      <button onclick="biz('forecast')">Enough cash next month?</button>
+      <button onclick="biz('actions')">What should I do?</button>
+    </div>
+    <div class="row" style="margin-top:12px">
+      <div><label>Known supplier obligations next month (₦, optional)</label>
+        <input id="bz-obl" placeholder="4200000"></div>
+    </div>
+    <details style="margin-top:12px">
+      <summary class="muted">Use my own data instead of the sample business</summary>
+      <label>Paste a transactions CSV (date, description, amount, category, counterparty, ref)</label>
+      <textarea id="bz-csv" placeholder="date,description,amount,category,counterparty,ref&#10;2026-03-02,Counter sale,125000,Sales,Walk-in,TX9001"></textarea>
+      <button class="go" onclick="importCsv()">Import my transactions</button>
+    </details>
+    <span class="spin">computing…</span>
+    <div class="result">
+      <h3>Result</h3>
+      <div class="verified"><h4>Verified figures — computed from your books</h4><div class="v"></div></div>
+      <div class="narr"><h4>Copilot explains</h4><div class="n"></div></div>
+    </div>
+  </section>
 
   <!-- RECONCILE -->
   <section class="card tab" id="tab-reconcile">
@@ -142,6 +171,35 @@ function txExample(i) {
   $("#tx-q").value = q; $("#tx-turn").value = t; $("#tx-ass").value = a; $("#tx-prof").checked = p;
 }
 function qtExample() { $("#qt-items").value = "Bags of cement, 10, 8500"; }
+
+async function biz(kind) {
+  const tab = $("#tab-business");
+  tab.querySelector(".spin").style.display = "inline";
+  try {
+    const r = await fetch("/api/business", { method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ kind, obligations: $("#bz-obl").value || null }) });
+    const d = await r.json();
+    tab.querySelector(".result").style.display = "block";
+    tab.querySelector(".verified .v").textContent = d.error ? ("Problem: " + d.error) : d.verified;
+    tab.querySelector(".narr .n").textContent = d.narrative ||
+      "(model offline — start llama-server for the plain-language explanation; the figures above are complete without it)";
+    if (d.txn_count) $("#bz-count").textContent = `Reading ${d.txn_count} transactions.`;
+  } finally { tab.querySelector(".spin").style.display = "none"; }
+}
+
+async function importCsv() {
+  const tab = $("#tab-business");
+  tab.querySelector(".spin").style.display = "inline";
+  try {
+    const r = await fetch("/api/import", { method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ csv: $("#bz-csv").value }) });
+    const d = await r.json();
+    tab.querySelector(".result").style.display = "block";
+    tab.querySelector(".verified .v").textContent = d.error ? ("Import failed: " + d.error) : d.verified;
+    tab.querySelector(".narr .n").textContent = d.error ? "" : "Your data is loaded — ask a question above.";
+    if (d.txn_count) $("#bz-count").textContent = `Reading ${d.txn_count} transactions.`;
+  } finally { tab.querySelector(".spin").style.display = "none"; }
+}
 
 function payload(task) {
   if (task === "reconcile") {
