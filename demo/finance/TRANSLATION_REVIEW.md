@@ -57,14 +57,16 @@ Word order may move a placeholder anywhere in the sentence; that is fine.
 > Accountant = *ọgbakọego*, Taxation = *inye ụtụ*, Balance = *ego fọdụrụ*.
 > **What the glossary cannot give us is sentence construction, agreement and register** —
 > that is what we need you for. Please focus there rather than on individual nouns.
+>
+> `[G]` marks a line using glossary-attested vocabulary.
 
 | Key | English (verified) | Draft — UNVERIFIED | Your correction |
 |---|---|---|---|
-| revenue | Revenue: {currency} {amount} | Ego batara: {currency} {amount} | |
-| expenses | Expenses: {currency} {amount} | Ego emefuru: {currency} {amount} | |
+| revenue | Revenue: {currency} {amount} | Ego batara: {currency} {amount} `[G]` | |
+| expenses | Expenses: {currency} {amount} | Imefu ego: {currency} {amount} `[G]` | |
 | net | Net: {currency} {amount} | Uru fọdụrụ: {currency} {amount} | |
 | cash_position | Cash on hand: {currency} {amount} | Ego dị n'aka: {currency} {amount} | |
-| receivables | Owed to you: {currency} {amount} (overdue: {currency} {overdue}) | Ego a ji gị: {currency} {amount} (gafeela oge: {currency} {overdue}) | |
+| receivables | Owed to you: {currency} {amount} (overdue: {currency} {overdue}) | Ụgwọ a ji gị: {currency} {amount} (ụgwọ e ji eji: {currency} {overdue}) `[G]` | |
 | margin | Gross margin: {pct}% | Pasent uru: {pct}% | |
 | up_pct | up {pct}% on last month | rịgoro {pct}% karịa ọnwa gara aga | |
 | down_pct | down {pct}% on last month | dara {pct}% site n'ọnwa gara aga | |
@@ -73,7 +75,7 @@ Word order may move a placeholder anywhere in the sentence; that is fine.
 | shortfall | Projected shortfall next month: {currency} {amount} | A na-atụ anya ụkọ ego n'ọnwa na-abịa: {currency} {amount} | |
 | covered | Projected to cover next month's obligations | A na-atụ anya na ego ga-ezu maka ọnwa na-abịa | |
 | no_issues | Nothing unusual found in your transactions. | Ọ dịghị ihe ijuanya dị na azụmahịa gị. | |
-| confirm_professional | Confirm specifics with FIRS or a licensed accountant. | Gakwuru FIRS ma ọ bụ onye ọkachamara n'ọgụgụ ego maka nkwenye. | |
+| confirm_professional | Confirm specifics with FIRS or a licensed accountant. | Gakwuru FIRS ma ọ bụ ọgbakọego maka nkwenye. `[G]` | |
 
 ## Yoruba (`yo`)
 
