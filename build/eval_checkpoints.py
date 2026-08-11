@@ -48,21 +48,24 @@ def build_gguf(adapter: Path, workdir: Path) -> Path:
     f16, q8, q4 = gguf / "f16.gguf", gguf / "q8.gguf", gguf / "model-Q4_K_M.gguf"
     imatrix = workdir / "imatrix.dat"
 
+    # DISK DISCIPLINE: each artifact is deleted the moment it is no longer needed. Holding
+    # fused (5.8G) + f16 (5.8G) + Q8 (3.1G) + Q4 (1.9G) at once peaks at ~16.6 GB and would
+    # exhaust the free space on this machine mid-run; staged cleanup keeps the peak ~11.6 GB.
     run([MLX_FUSE, "--model", BASE, "--adapter-path", str(adapter),
          "--dequantize", "--save-path", str(fused)])
     run([sys.executable, str(Path.home() / "adtc-local/llama.cpp/convert_hf_to_gguf.py"),
          str(fused), "--outfile", str(f16), "--outtype", "f16"])
+    shutil.rmtree(fused, ignore_errors=True)                      # -5.8 GB, no longer needed
+
     run([str(LLAMA / "bin/llama-quantize"), str(f16), str(q8), "Q8_0"])
     run([str(LLAMA / "bin/llama-imatrix"), "-m", str(q8), "-f", "calibration_text.txt",
          "-o", str(imatrix), "-ngl", "99", "-c", "512", "-t", "8"],
         stdout=subprocess.DEVNULL)
+    q8.unlink(missing_ok=True)                                    # -3.1 GB, imatrix is written
+
     run([str(LLAMA / "bin/llama-quantize"), "--imatrix", str(imatrix),
          str(f16), str(q4), "Q4_K_M"])
-
-    # reclaim ~9 GB immediately; only the Q4 is needed for the gates
-    shutil.rmtree(fused, ignore_errors=True)
-    f16.unlink(missing_ok=True)
-    q8.unlink(missing_ok=True)
+    f16.unlink(missing_ok=True)                                   # -5.8 GB, only Q4 is graded
     return q4
 
 
