@@ -108,29 +108,32 @@ def main():
             q4 = build_gguf(adapter_dir, workdir)
             facts, facts_n = score("fact_eval.py", q4, BUILD / f"results/ckpt{ckpt}_facts.md")
             arith, arith_n = score("arith_eval.py", q4, BUILD / f"results/ckpt{ckpt}_arith.md")
+            narr, narr_n = score("narration_eval.py", q4, BUILD / f"results/ckpt{ckpt}_narr.md")
             passes = facts >= GATE_FACTS and arith > GATE_ARITH
-            results.append((ckpt, facts, facts_n, arith, arith_n, passes))
+            results.append((ckpt, facts, facts_n, arith, arith_n, passes, narr, narr_n))
             print(f"  -> facts {facts}/{facts_n}, arithmetic {arith}/{arith_n}, "
-                  f"{'SHIPPABLE' if passes else 'below gate'}", flush=True)
+                  f"narration {narr}/{narr_n}, {'SHIPPABLE' if passes else 'below gate'}", flush=True)
             if args.keep:
                 shutil.move(str(q4), BUILD / f"results/model-ckpt{ckpt}-Q4_K_M.gguf")
         finally:
             shutil.rmtree(workdir, ignore_errors=True)
 
     print("\n" + "=" * 64)
-    print(f"{'ckpt':>6} {'facts':>10} {'arith':>10}  verdict")
-    for ckpt, f, fn, a, an, ok in results:
-        print(f"{ckpt:>6} {f:>5}/{fn:<4} {a:>5}/{an:<4}  {'SHIPPABLE' if ok else 'below gate'}")
+    print(f"{'ckpt':>6} {'facts':>10} {'arith':>10} {'narration':>11}  verdict")
+    for ckpt, f, fn, a, an, ok, nr, nn in results:
+        print(f"{ckpt:>6} {f:>5}/{fn:<4} {a:>5}/{an:<4} {nr:>6}/{nn:<4}  "
+              f"{'SHIPPABLE' if ok else 'below gate'}")
     print(f"\ngate: facts >= {GATE_FACTS} AND arithmetic > {GATE_ARITH} (v3 incumbent)")
     winners = [r for r in results if r[5]]
     if winners:
-        best = max(winners, key=lambda r: (r[1] + r[3]))
+        best = max(winners, key=lambda r: (r[1] + r[3] + r[6]))
         print(f"WINNER: checkpoint {best[0]} (facts {best[1]}, arithmetic {best[3]})")
     else:
         print("NO CHECKPOINT CLEARS THE GATE — ship v3 unchanged.")
     (BUILD / "results/checkpoint_selection.json").write_text(json.dumps(
         [{"checkpoint": c, "facts": f, "facts_total": fn, "arith": a, "arith_total": an,
-          "shippable": ok} for c, f, fn, a, an, ok in results], indent=2))
+          "narration": nr, "narration_total": nn, "shippable": ok}
+         for c, f, fn, a, an, ok, nr, nn in results], indent=2))
 
 
 if __name__ == "__main__":
