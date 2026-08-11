@@ -46,24 +46,33 @@ EN = {
     "confirm_professional": "Confirm specifics with FIRS or a licensed accountant.",
 }
 
-# Hausa — NATIVE REVIEWED, confirmed 2026-08-11. Reviewer returned the draft unchanged.
+# Hausa — NATIVE REVIEWED 2026-08-11, corrections applied (11 of 14 strings changed).
+# NOTE: an earlier commit marked this catalogue reviewed-unchanged on an ambiguous
+# confirmation, before the review had actually arrived. It had not been reviewed.
 HA = {
     "_reviewed": True,
     "_name": "Hausa",
+    "_source": ("Native reviewer corrections applied 2026-08-11 — 11 of 14 strings changed "
+                "from the AI draft, including the two flagged as highest-risk: 'Ribar da ta "
+                "rage' -> 'Kudin da ya rage' (profit/balance conflation) and 'Ribar kaso' -> "
+                "'Kason riba' (word order)"),
     "revenue": "Kudin shiga: {currency} {amount}",
-    "expenses": "Kashe kudi: {currency} {amount}",
-    "net": "Ribar da ta rage: {currency} {amount}",
+    "expenses": "Kudin da aka kashe: {currency} {amount}",
+    "net": "Kudin da ya rage: {currency} {amount}",
     "cash_position": "Kudin da ke hannu: {currency} {amount}",
-    "receivables": "Ana bin ka: {currency} {amount} (wanda ya wuce lokaci: {currency} {overdue})",
-    "margin": "Ribar kaso: {pct}%",
-    "up_pct": "ya karu da {pct}% fiye da watan da ya gabata",
-    "down_pct": "ya ragu da {pct}% daga watan da ya gabata",
-    "chase_customer": "Nemi biyan kudi daga {name} — {currency} {amount}, kwanaki {days} sun wuce",
-    "duplicate_payment": "Wataƙila an biya {currency} {amount} sau biyu ga {name}",
-    "shortfall": "Ana hasashen ƙarancin kudi wata mai zuwa: {currency} {amount}",
-    "covered": "Ana hasashen kudin zai isa wata mai zuwa",
-    "no_issues": "Ba a sami wani abu na banmamaki ba a cikin ma'amalolinka.",
-    "confirm_professional": "Ka tabbatar da cikakken bayani daga FIRS ko akanta mai lasisi.",
+    "receivables": "Kudin da ake bin ka: {currency} {amount} "
+                   "(lokacin biya ya wuce: {currency} {overdue})",
+    "margin": "Kason Riba: {pct}%",
+    "up_pct": "Ya karu da {pct}% fiye da watan da ya gabata",
+    "down_pct": "Ya ragu da {pct}% daga watan da ya gabata",
+    "chase_customer": "Kudin da {name} zai biya — {currency} {amount}, "
+                      "ya makara da biyan kudin da kwanaki {days}",
+    "duplicate_payment": "Akwai yiwuwar an biya {name} {currency} {amount} sau biyu",
+    "shortfall": "Ƙarancin kudin da ake hasashen za a samu wata mai zuwa: {currency} {amount}",
+    "covered": "Kudin da ake hasashen zai isa wata mai zuwa",
+    "no_issues": "Ba a samu wata matsala ba a cikin hada-hadar kudinka.",
+    "confirm_professional": "Ka tuntubi FIRS ko wani akanta mai lasisi domin tabbatar da "
+                            "cikakkun bayanai.",
 }
 
 # Igbo — REVIEWER CORRECTIONS APPLIED (2026-08-11). 10 of 14 strings differ from the AI

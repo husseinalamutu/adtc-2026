@@ -1,4 +1,14 @@
-# Translation review sheet — Hausa and Igbo
+# Translation review — Hausa and Igbo: **COMPLETE**
+
+Both catalogues were reviewed by native speakers and corrections applied on 2026-08-11.
+Hausa: 11 of 14 strings changed. Igbo: 10 of 14 changed. Both are now live in the app
+(`i18n.available()` -> `['en', 'ha', 'ig']`). This sheet is kept as the audit trail and
+as the template for any future language.
+
+**Independent convergence worth noting:** both reviewers, working separately, made the
+same correction to the *Net* line — replacing the word for *profit* with the word for
+*money* (Hausa `Ribar da ta rage` -> `Kudin da ya rage`; Igbo `Uru fọdụrụ` -> `Ego
+fọdụrụ`). The AI draft had conflated net profit with remaining balance in both languages.
 
 *(Yoruba is drafted in the code but NOT claimed for this submission — the
 African-language claim covers Hausa and Igbo only.)*
