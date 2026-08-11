@@ -1,64 +1,78 @@
 # Session handoff — live state & how to continue
 
-Last updated: 2026-07-13 — **model LOCKED & SHIPPED**. Qwen2.5-3B v3 GGUF: fact eval 34/37
-(gate 22/23, all 5 canonical Nigeria facts pass), arithmetic clean, sha256-verified on HF.
-Speed measured on audit-class x86: **2.75 tok/s** under the audit's scalar build — final, by
-design (see below). Any new/resumed Claude session: read this + `STRATEGY.md` +
-`build/results/*.md` first. History lives in the results docs, not here.
+Last updated: 2026-08-11. **Shipped model = v3** (Qwen2.5-3B QLoRA → imatrix Q4_K_M, 1.93 GB,
+on HF, sha256-verified). A v5 retrain was attempted and **rejected by the gates**; v5b is
+running. The product around the model grew substantially this session: a six-layer offline
+financial intelligence engine, a demo app, and a multilingual output layer.
+
+Read this + `STRATEGY.md` + `build/results/*.md` first. History lives in the results docs.
 
 ## Project one-liner
-ADTC-2026 entry: offline back-office copilot for African SMEs. A Qwen2.5-3B QLoRA → imatrix
-Q4_K_M GGUF (~1.93 GB), domain = `corporate_enterprise`, African use case = mobile-money
-reconciliation + Nigeria-2025 tax. Repo: https://github.com/husseinalamutu/adtc-2026
+ADTC-2026 entry: offline **financial intelligence engine** for African SMEs. Qwen2.5-3B QLoRA
+→ imatrix Q4_K_M GGUF (~1.93 GB), domain `corporate_enterprise`.
+Repo: https://github.com/husseinalamutu/adtc-2026
 Model: https://huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf
 
-## Scoring status (all axes settled)
-- **Accuracy (50%)**: arithmetic/reconciliation excellent; Nigeria facts 34/37 on
-  `build/fact_eval.py` (v1 was 24/37). Judged partly qualitatively — coherence counts.
-  Further gains → the demo's retrieval/fact-pack layer, NOT more weight drilling
-  (v4 regression + 1.5B experiment both proved the weights are at their sweet spot).
-- **Efficiency (20%)**: peak RSS ~2.0 GB → S_eff ≈ 72/100. DONE.
-- **Speed (30%)**: 2.75 tok/s (i7-1185G7, audit-exact scalar flags). NO floor — scored
-  `S_perf = 100·TPS/TPS_max` relative to the field (website supersedes profiler README).
-  Size re-validated empirically: 1.5B doubled speed but failed declared-prompt arithmetic
-  (`build/results/model_size_tradeoff_2026-07-13.md`). Decision: accuracy > speed. CLOSED.
+## Scoring status
+- **Accuracy (50%)**: v3 = **34/37 facts, 9/12 arithmetic, 5/5 narration** on the three gates.
+- **Efficiency (20%)**: peak RSS ~2.0 GB → S_eff ≈ 71/100.
+- **Speed (30%)**: **2.75 tok/s** (i7-1185G7, audit-exact scalar build). NO floor —
+  `S_perf = 100·TPS/TPS_max`, relative to the field. Leaderboard is still empty (re-check it).
+- Hidden prompts are **3**, not 2 (verified 2026-07-20) → 3 of 5 scored prompts are hidden.
 
-## Verification tooling (use these, not ad-hoc prompts)
-- `build/fact_eval.py` — 37-question Nigeria fact eval, greedy, regex-scored; `--gate-only`
-  for the 23 shipping-gate questions. The ship bar: all 5 canonical facts + no wrong numbers.
-- `build/build_final.sh` — full 3B GGUF chain; `benchmark/telemetry_test.py` — RSS/thermal check.
-- Known model limits (documented, acceptable): def-4-style applied-threshold conclusions,
-  partial-payment carry final line, old CGT rate on individuals (cgt-3-class).
+## THE THREE GATES — run these before shipping anything
+```
+python3 build/fact_eval.py       # 37 Nigeria questions   (v3: 34/37)
+python3 build/arith_eval.py      # 12 arithmetic cases    (v3:  9/12)
+python3 build/narration_eval.py  #  5 fidelity checks     (v3:  5/5)
+python3 build/eval_checkpoints.py --checkpoints 1400 1100 900   # all three, per checkpoint
+```
+Ship rule: **facts ≥ 34 AND arithmetic > 9.** Nothing ships on validation loss — see below.
 
-## Gotchas learned (don't rediscover these)
-- Fine-tune on the **4-bit** base (`build/models/Qwen2.5-3B-Instruct-4bit`), never bf16 — see
-  `build/mlx_lora_config.yaml` header. Peak ~3.9 GB, fits 8 GB.
-- imatrix: compute on a **Q8_0 copy w/ GPU** (`04_imatrix_quantize.sh` does this) — f16-on-CPU is 2.5 hrs.
-- Data gen: free-tier is tight. Groq (`GENERATION_PROVIDER=groq`) round-robins 8b+70b; Gemini is
-  the fallback. Both reset daily. Keys in `data/.env` (git-ignored).
-- HF transfers (both directions) wedge on dead sockets on this network — use
-  `hf_upload_watchdog.sh` (verifies by sha256, not size) / `build/download_base_1p5b.sh`-style
-  stall watchdogs; never trust a bare long transfer.
-- Background jobs die at session teardown but `nohup`+resumable scripts survive; re-run to continue.
-- **macOS IOGPU kernel panic** (FB22091885): sustained MLX Metal load can panic the whole Mac
-  ("completeMemory() prepare count underflow"); it killed a training run 2026-07-10. Workaround:
-  always train via `build/train_launcher.py` (caps Metal memory 5GB / cache 1GB / wired 3.5GB) —
-  `resume_training.sh` already does. Don't launch `mlx_lm.lora` bare.
-- `resume_training.sh` deletes numbered checkpoints on resume — copy anything you might want
-  into `adapters_best/` BEFORE resuming (this cost us the v3 adapter; the GGUF survives).
-- Commits: **no `Co-Authored-By: Claude` trailer** (user preference).
+## The most important lesson of this project
+**Validation loss does not track what is scored.** Twice now a model with better val loss had
+worse facts: v4 (val-selected, 34→31) and v5 (best val of any run, 0.314, facts 34→26).
+Both were caught only because the gates existed and were fixed in advance.
+
+**Fact recall is a function of exposure share** and fails least-reinforced-first:
+| run | Nigeria share of mix | facts |
+|---|---|---|
+| v3 | ~48% (780×3) | 34/37 |
+| v5 | ~26% (642×2 + 1,100 new drills) | 26/37 |
+| v5b | ~39% (642×4) | running |
+Full analysis: `build/results/v5_dilution_finding_2026-08-11.md`.
+
+## What exists now (beyond the model)
+- `demo/finance/` — deterministic engine, **70 tests**, stdlib only: `store` (SQLite, Decimal
+  money), `ledger` (double-entry, carry allocation), `analytics` (P&L/margin/aging/health),
+  `inventory` (weighted-average COGS, turnover, cash-conversion cycle, dead stock),
+  `anomalies` (robust z-score, duplicates, price jumps — 371 txns → 6 flagged), `advisor`
+  (ranked interventions), `tax_rules` (citeable, from the same verified fact base), `i18n`.
+- `demo/app/` — offline app: Ask-my-business (health / anomalies / forecast / stock / actions),
+  reconcile, tax, quote, CSV import. Engine computes, model narrates. `bash demo/app/run_demo.sh`
+- `i18n.py` — Hausa + Igbo (+ Yoruba drafted, NOT claimed). Figures identical across languages
+  by construction. **Unreviewed catalogues are gated in code** (`available()` returns `["en"]`)
+  until a native reviewer flips `_reviewed`. Igbo vocabulary is sourced from a published
+  glossary (`demo/finance/sources/`, IGBOSCHOLARS 2013). Review sheet: `TRANSLATION_REVIEW.md`.
+- Data: 5,216 examples, **3 of 5 generators fully deterministic**; 139 data tests incl. a
+  **contamination guard** (3 eval questions were found verbatim in training and rephrased).
+
+## Gotchas (don't rediscover these)
+- Fine-tune on the **4-bit** base, never bf16. Peak ~3.9 GB, fits 8 GB.
+- imatrix on a **Q8_0 copy w/ GPU** — f16-on-CPU is 2.5 hrs vs 4 min.
+- **macOS IOGPU kernel panic** (FB22091885): always train via `build/train_launcher.py`
+  (Metal caps). Never run heavy GPU work concurrently with training.
+- `resume_training.sh` archives numbered checkpoints to `adapters_best/` before clearing —
+  losing them once cost us the v3 adapter.
+- Eval intermediates peak ~11.6 GB; `eval_checkpoints.py` stages its cleanup for that reason.
+- HF transfers wedge on this network → the watchdogs verify by **sha256**, not size.
+- Commits: **no `Co-Authored-By: Claude` trailer**.
 
 ## Remaining Gate-1 deliverables (due Aug 25, 2026)
-- [x] `submission/metadata.json`: team_id `HusseinAlamutu` + github_handle `husseinalamutu` filled.
-- [x] Artifact rebranded end to end: `alamz-tech-sme-copilot` (HF repo renamed w/ redirect,
-      sha256 unchanged, model card live, profiler re-verified).
-- [x] Demo app built (`demo/app/run_demo.sh`): model narrates, module computes, citations shown.
-- [x] Load-bearing pairing: **BUILT** (`demo/finance/` — MoMo parser + double-entry ledger with
-      lump-sum/carry allocation + citeable TaxRules from the verified facts file; 13 tests, the
-      eval cases the models got wrong included). metadata.json's claim is now true. Next: wire
-      it into the demo app UI beside the model (Best Integration Award target).
-- [ ] Send `infra/organizer_questions_draft.md` (scalar build intentional? llama.cpp pin?
-      which speed formula governs?) — user reviews and sends.
-- [ ] 2-min video + demo app for the live defense (llama-server UI is the zero-code fallback).
-- [ ] Freeze: pin repo to submission commit; verify clean-clone `download_model.sh` +
-      `docker/run_local_emulation.sh` pass end-to-end.
+- [x] metadata.json (team_id, github_handle), artifact rebranded, HF model card live
+- [x] Load-bearing pairing built and true; demo app; REPORT architecture current
+- [ ] **v5b result** → promote or confirm v3 (in flight)
+- [ ] Native **Hausa + Igbo** review of `TRANSLATION_REVIEW.md` (owner sourcing reviewers)
+- [ ] Send `infra/organizer_questions_draft.md`
+- [ ] 2-min video (script + Q&A prep are LOCAL only, gitignored)
+- [ ] Freeze: pin the submission commit; clean-clone `download_model.sh` + profiler check
