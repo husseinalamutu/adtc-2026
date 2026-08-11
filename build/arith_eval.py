@@ -26,15 +26,15 @@ LLAMA_CLI = os.environ.get(
 # (id, topic, question, must[], must_not[], note)
 CASES = [
     # --- VAT / quoting ---
-    ("vat-1", "vat_math",
+    ("vatcalc-1", "vat_math",
      "Draft a quote for 10 bags of cement at NGN 8,500 each with 7.5% VAT.",
      [r"85[,\s]?000", r"6[,\s]?375", r"91[,\s]?375"], [],
      "10x8500=85,000; VAT 6,375; total 91,375"),
-    ("vat-2", "vat_math",
+    ("vatcalc-2", "vat_math",
      "A customer buys 3 items at NGN 12,000 each. Add 7.5% VAT. What is the total?",
      [r"36[,\s]?000", r"2[,\s]?700", r"38[,\s]?700"], [],
      "36,000 + 2,700 = 38,700"),
-    ("vat-3", "vat_math",
+    ("vatcalc-3", "vat_math",
      "My invoice subtotal is NGN 240,000. How much VAT do I add and what is the total?",
      [r"18[,\s]?000", r"258[,\s]?000"], [],
      "VAT 18,000; total 258,000"),

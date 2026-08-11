@@ -7,6 +7,11 @@ so a pass measures recall of the *fact*, not of a drilled phrasing. Scored by re
 every `must` pattern must match the answer, no `must_not` may. Questions tagged gate=True
 are the shipping gate (the 5 facts HANDOFF requires); --gate-only runs just those.
 
+CONTAMINATION: three questions once appeared verbatim in the training corpus (the LLM
+drill generator naturally produced the same obvious phrasing) and were rephrased on
+2026-07-20. `data/tests/test_eval_contamination.py` fails the build if any eval question
+reappears verbatim in train/holdout — an eval the model memorised measures nothing.
+
 Usage: python3 fact_eval.py [--model gguf/model-Q4_K_M.gguf] [--gate-only] [--out results/...]
 Runtime: ~4-6 min for all 37 (one llama-cli load per question, same flags as the smoke test).
 """
@@ -23,7 +28,7 @@ LLAMA_CLI = os.environ.get(
 # (id, topic, gate, question, must[], must_not[])
 QUESTIONS = [
     # --- VAT standard rate: 7.5% (gate) ---
-    ("vat-1", "vat_rate", True, "What is the current VAT rate in Nigeria?",
+    ("vat-1", "vat_rate", True, "A customer is querying their bill — what percentage of VAT am I required to charge on goods in Nigeria?",
      [r"7\.5\s*%"], [r"(?<![\d.])5\.5\s*%", r"(?<![\d.])5\s*%", r"(?<![\d.])10\s*%"]),
     ("vat-2", "vat_rate", True, "How much VAT do I add to a customer's invoice for goods I sell?",
      [r"7\.5\s*%"], [r"(?<![\d.])5\.5\s*%"]),
@@ -82,7 +87,7 @@ QUESTIONS = [
     # --- Capital gains tax ---
     ("cgt-1", "capital_gains", False, "What is the Capital Gains Tax rate for companies under the 2025 reform?",
      [r"30\s*%"], []),
-    ("cgt-2", "capital_gains", False, "Do small companies pay Capital Gains Tax?",
+    ("cgt-2", "capital_gains", False, "If a small company sells a delivery van at a profit, is Capital Gains Tax due on it?",
      [r"exempt|no\b|not\b"], []),
     ("cgt-3", "capital_gains", False, "How are capital gains of individuals taxed now?",
      [r"personal income|bands|25\s*%"], []),
@@ -105,7 +110,7 @@ QUESTIONS = [
     # --- Filing & penalties ---
     ("file-1", "filing_penalties", False, "When must an established Nigerian company file its annual tax returns?",
      [r"6\s*months"], []),
-    ("file-2", "filing_penalties", False, "What is the penalty for failing to register for tax in Nigeria?",
+    ("file-2", "filing_penalties", False, "My business never registered for tax and has been trading for months. What does that failure cost, and does it grow?",
      [r"50,000|₦50"], []),
 ]
 
