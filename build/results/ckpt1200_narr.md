@@ -1,7 +1,7 @@
-# Narration fidelity — 2026-08-11_1912
+# Narration fidelity — 2026-08-11_1922
 
-Model: `/Users/husseinalamutu/Desktop/Development/adtc-2026/build/_ckpt_1400/gguf/model-Q4_K_M.gguf`
-**3/5 replies used only figures from the verified block.**
+Model: `/Users/husseinalamutu/Desktop/Development/adtc-2026/build/_ckpt_1200/gguf/model-Q4_K_M.gguf`
+**5/5 replies used only figures from the verified block.**
 
 ## ✅ narr-health
 *What happened to my business this month?*
@@ -30,7 +30,7 @@ Largest expense movements: Inventory purchase NGN 2,373,000.00 (-15.5%); Staff s
 ## ✅ narr-anomaly
 *Is anything unusual in my transactions?*
 
-- 6 verified figure(s) restated, none invented
+- 8 verified figure(s) restated, none invented
 
 ```
 Is anything unusual in my transactions?
@@ -41,16 +41,16 @@ VERIFIED FIGURES (computed by the accounting module — use exactly these):
 2 ... (truncated)
 
 |-\|/-\|/-\|/ 6 transaction(s) flagged for review, most significant first:
-1. [amount_outlier] NGN 340,000.00 on 2026-05-09 — 55.3x the typical spread for Transport (usual is around NGN 12,000.00)
-2. [duplicate_payment] NGN 312,500.00 on 2026-04-15 — identical amount already paid to the same payee on 2026-04-14 (1 day(s) earlier) — possible double payment
-3. [price_jump] NGN 420,000.00 on 2026-04-09 — 98% above what you usually pay this supplier for 'Inventory purchase' (usual NGN 212,250.00) — check the invoice or renegotiate
-4. [price_jump] NGN 171,000.00 on 2026-
+1. NGN 340,000.00 — 55.3x the typical spread for Transport (usual is around NGN 12,000.00) — likely a genuine transaction, but check the invoice
+2. NGN 312,500.00 — identical amount already paid to the same payee on 2026-04-14 (1 day(s) earlier) — possible double payment — check the records
+3. NGN 420,000.00 — 98% above what you usually pay this supplier for 'Inventory purchase' (usual NGN 212,250.00) — check the invoice or renegotiate
+4. NGN 171,000.00 — 80% above what you usually pay this s
 ```
 
-## ❌ narr-forecast
+## ✅ narr-forecast
 *Will I have enough cash next month?*
 
-- INVENTED FIGURES: 3.785E+6
+- 5 verified figure(s) restated, none invented
 
 ```
 Will I have enough cash next month?
@@ -62,11 +62,7 @@ Expected inflow: NGN 4,167,500.00
 Expected outflow: NGN 3,082,500.00
 Projected closin ... (truncated)
 
-|-\|/-\| **Projected closing cash: NGN 2,700,000.00 + NGN 4,167,500.00 - NGN 3,082,500.00 = NGN 3,785,000.00**
-
-**Shortfall: NGN 641,000.00**
-
-You will not have enough cash next month.
+|-\|/-\|/ Your projected closing cash is NGN 2,700,000.00. With expected outflows of NGN 3,082,500.00 and known obligations of NGN 4,200,000.00, you will have a shortfall of NGN 641,000.00 next month.
 ```
 
 ## ✅ narr-actions
@@ -83,16 +79,16 @@ Recommended actions, highest recoverable value first:
 1. Chase Adeyemi Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days pa ... (truncated)
 
 |-\|/-\|/- Recommended actions, highest recoverable value first:
-1. Chase Adeyamen Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days past due)
+1. Chase Adeyemi Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days past due)
 2. Recover the suspected double payment from Lagos Steel Ltd — frees NGN 312,500.00 (high confidence; identical amount paid twice around 2026-04-15)
 3. Clear slow-moving stock: Imported floor tiles — frees NGN 1,016,400.00 (medium confidence; 66 units worth NGN 1,452,000.00 at cost, unsold for 156 days; assumes a 30% clearance discount)
-4. Query the price increase with Dangote Cement Depot — fre
+4. Query the price increase with Dangote Cement Depot — free
 ```
 
-## ❌ narr-stock
+## ✅ narr-stock
 *How much of my cash is tied up in stock?*
 
-- INVENTED FIGURES: 1.452E+5
+- 4 verified figure(s) restated, none invented
 
 ```
 How much of my cash is tied up in stock?
@@ -103,6 +99,7 @@ Cost of goods sold in the period: NGN 309,500.00
 Inventory turnover: 3.79x per year (96 days of stock held)
 Capital  ... (truncated)
 
-|-\|/ 145,200.00 of your cash is tied up in stock.
+|-\|/- **Total capital tied up in stock unsold for 90+ days:** NGN 1,452,000.00
+- **Imported floor tiles:** NGN 1,452,000.00
 ```
 

@@ -1,7 +1,17 @@
 [
   {
     "checkpoint": 1400,
-    "facts": 26,
+    "facts": 32,
+    "facts_total": 37,
+    "arith": 10,
+    "arith_total": 12,
+    "narration": 3,
+    "narration_total": 5,
+    "shippable": false
+  },
+  {
+    "checkpoint": 1200,
+    "facts": 33,
     "facts_total": 37,
     "arith": 10,
     "arith_total": 12,
@@ -10,22 +20,12 @@
     "shippable": false
   },
   {
-    "checkpoint": 1100,
-    "facts": 23,
+    "checkpoint": 1000,
+    "facts": 27,
     "facts_total": 37,
-    "arith": 10,
+    "arith": 9,
     "arith_total": 12,
-    "narration": 4,
-    "narration_total": 5,
-    "shippable": false
-  },
-  {
-    "checkpoint": 900,
-    "facts": 26,
-    "facts_total": 37,
-    "arith": 10,
-    "arith_total": 12,
-    "narration": 4,
+    "narration": 5,
     "narration_total": 5,
     "shippable": false
   }

@@ -1,7 +1,7 @@
-# Narration fidelity — 2026-08-11_1912
+# Narration fidelity — 2026-08-11_1931
 
-Model: `/Users/husseinalamutu/Desktop/Development/adtc-2026/build/_ckpt_1400/gguf/model-Q4_K_M.gguf`
-**3/5 replies used only figures from the verified block.**
+Model: `/Users/husseinalamutu/Desktop/Development/adtc-2026/build/_ckpt_1000/gguf/model-Q4_K_M.gguf`
+**5/5 replies used only figures from the verified block.**
 
 ## ✅ narr-health
 *What happened to my business this month?*
@@ -18,13 +18,7 @@ Expenses: NGN 2,990,500.00 (-20.9% vs prior month)
 Net: NGN 415,500.00
 Gross margin: 30.3% (-7.7 pt ... (truncated)
 
-|-\|/-\| Revenue: NGN 3,406,000.00 (-24.9% vs prior month)
-Expenses: NGN 2,990,500.00 (-20.9% vs prior month)
-Net: NGN 415,500.00
-Gross margin: 30.3% (-7.7 pts)
-Cash position (all time): NGN 3,577,500.00
-Receivables outstanding: NGN 1,239,500.00 (overdue: NGN 315,500.00)
-Largest expense movements: Inventory purchase NGN 2,373,000.00 (-15.5%); Staff salaries NGN 240,000.00 (+0.0%); Rent NGN 150,000.00 (+0.0%)
+|-\|/-\| Revenue was NGN 3,406,000.00 (-24.9% vs prior month). Expenses were NGN 2,990,500.00 (-20.9%). Net was NGN 415,500.00. Gross margin was 30.3% (-7.7 pts). Cash position was NGN 3,577,500.00. Receivables outstanding were NGN 1,239,500.00 (overdue NGN 315,500.00). Largest expense movements: Inventory purchase NGN 2,373,000.00 (-15.5%); Staff salaries NGN 240,000.00 (+0.0%); Rent NGN 150,000.00 (+0.0%).
 ```
 
 ## ✅ narr-anomaly
@@ -40,17 +34,17 @@ VERIFIED FIGURES (computed by the accounting module — use exactly these):
 1. [amount_outlier] 2026-05-09 NGN 340,000.00 — 55.3x the typical spread for Transport (usual is around NGN 12,000.00)
 2 ... (truncated)
 
-|-\|/-\|/-\|/ 6 transaction(s) flagged for review, most significant first:
-1. [amount_outlier] NGN 340,000.00 on 2026-05-09 — 55.3x the typical spread for Transport (usual is around NGN 12,000.00)
-2. [duplicate_payment] NGN 312,500.00 on 2026-04-15 — identical amount already paid to the same payee on 2026-04-14 (1 day(s) earlier) — possible double payment
-3. [price_jump] NGN 420,000.00 on 2026-04-09 — 98% above what you usually pay this supplier for 'Inventory purchase' (usual NGN 212,250.00) — check the invoice or renegotiate
-4. [price_jump] NGN 171,000.00 on 2026-
+|-\|/-\|/-\| 6 transaction(s) flagged for review, most significant first:
+1. [amount_outlier] 2026-05-09 NGN 340,000.00 — 55.3x the typical spread for Transport (usual is around NGN 12,000.00)
+2. [duplicate_payment] 2026-04-15 NGN 312,500.00 to Lagos Steel Ltd — identical amount already paid to the same payee on 2026-04-14 (1 day(s) earlier) — possible double payment
+3. [price_jump] 2026-04-09 NGN 420,000.00 to Dangote Cement Depot — 98% above what you usually pay this supplier for 'Inventory purchase' (usual NGN 212,250.00) — check the invoice or renegotiate
+4. [pri
 ```
 
-## ❌ narr-forecast
+## ✅ narr-forecast
 *Will I have enough cash next month?*
 
-- INVENTED FIGURES: 3.785E+6
+- 4 verified figure(s) restated, none invented
 
 ```
 Will I have enough cash next month?
@@ -62,11 +56,9 @@ Expected inflow: NGN 4,167,500.00
 Expected outflow: NGN 3,082,500.00
 Projected closin ... (truncated)
 
-|-\|/-\| **Projected closing cash: NGN 2,700,000.00 + NGN 4,167,500.00 - NGN 3,082,500.00 = NGN 3,785,000.00**
+|-\|/-\| **Projected shortfall: NGN 641,000.00**
 
-**Shortfall: NGN 641,000.00**
-
-You will not have enough cash next month.
+You will need to find an additional NGN 641,000.00 in cash next month to meet your obligations.
 ```
 
 ## ✅ narr-actions
@@ -82,17 +74,17 @@ Projected shortfall: NGN 641,000.00.
 Recommended actions, highest recoverable value first:
 1. Chase Adeyemi Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days pa ... (truncated)
 
-|-\|/-\|/- Recommended actions, highest recoverable value first:
-1. Chase Adeyamen Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days past due)
+|-\|/-\|/- **Recommended actions:**
+1. Chase Adeyemi Construction for payment — frees NGN 684,000.00 (high confidence; invoice(s) 9 days past due)
 2. Recover the suspected double payment from Lagos Steel Ltd — frees NGN 312,500.00 (high confidence; identical amount paid twice around 2026-04-15)
 3. Clear slow-moving stock: Imported floor tiles — frees NGN 1,016,400.00 (medium confidence; 66 units worth NGN 1,452,000.00 at cost, unsold for 156 days; assumes a 30% clearance discount)
-4. Query the price increase with Dangote Cement Depot — fre
+4. Question the price increase with Dangote Cement Depot — frees NGN 207,750.00 (medium c
 ```
 
-## ❌ narr-stock
+## ✅ narr-stock
 *How much of my cash is tied up in stock?*
 
-- INVENTED FIGURES: 1.452E+5
+- 4 verified figure(s) restated, none invented
 
 ```
 How much of my cash is tied up in stock?
@@ -103,6 +95,6 @@ Cost of goods sold in the period: NGN 309,500.00
 Inventory turnover: 3.79x per year (96 days of stock held)
 Capital  ... (truncated)
 
-|-\|/ 145,200.00 of your cash is tied up in stock.
+|-\|/ **Cash tied up in stock:** NGN 1,452,000.00 (imported floor tiles). This is the amount of cash tied up in inventory that hasn't been sold within 90 days.
 ```
 

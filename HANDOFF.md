@@ -71,8 +71,11 @@ Full analysis: `build/results/v5_dilution_finding_2026-08-11.md`.
 ## Remaining Gate-1 deliverables (due Aug 25, 2026)
 - [x] metadata.json (team_id, github_handle), artifact rebranded, HF model card live
 - [x] Load-bearing pairing built and true; demo app; REPORT architecture current
-- [ ] **v5b result** → promote or confirm v3 (in flight)
-- [ ] Native **Hausa + Igbo** review of `TRANSLATION_REVIEW.md` (owner sourcing reviewers)
+- [x] **Retrain programme CLOSED** — v3 confirmed as the submission model. v5/v5b/v5c all
+      failed the gate; best challenger (v5c@1200: 33 facts, 10 arith) missed by one fact.
+      See `build/results/retrain_conclusion_2026-08-11.md`. Do not retrain again without a
+      new idea — this recipe's ceiling is measured, not assumed.
+- [x] Native **Hausa + Igbo** reviews complete and applied; both languages live in the app
 - [ ] Send `infra/organizer_questions_draft.md`
 - [ ] 2-min video (script + Q&A prep are LOCAL only, gitignored)
 - [ ] Freeze: pin the submission commit; clean-clone `download_model.sh` + profiler check
