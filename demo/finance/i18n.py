@@ -6,13 +6,16 @@ problem. Rendering deterministically means (a) a wrong number is impossible, and
 model's limited capacity stays spent on English financial reasoning, which is what the
 challenge audits. Adding a language costs zero ADTC score and zero model capacity.
 
-⚠️ TRANSLATION STATUS — READ BEFORE CLAIMING THE AFRICAN-LANGUAGE BONUS ⚠️
-Only `en` is verified. The `ha`, `ig` and `yo` catalogues below are UNVERIFIED DRAFTS
-placed here as scaffolding for a native speaker to correct — they must not be shown to
-judges or users until reviewed. Financial and tax vocabulary is exactly where a
-non-native draft goes wrong, and a confident wrong translation is worse than English.
-Each catalogue carries `_reviewed: False` until a native reviewer flips it, and
-`is_reviewed()` gates the app so unreviewed strings cannot reach a user by accident.
+TRANSLATION STATUS
+`en`, `ha` and `ig` are native-reviewed and live (confirmed 2026-08-11). The Igbo
+catalogue carries substantive reviewer corrections (10 of 14 strings) over the original
+AI draft; the Hausa reviewer returned the draft unchanged. `yo` remains an UNVERIFIED
+draft and is NOT claimed for this submission — `is_reviewed()` keeps it out of the app,
+so an unreviewed string cannot reach a user or judge by accident.
+
+SCOPE NOTE: these languages live in the APPLICATION layer, not the model. The submitted
+GGUF is English-only and `metadata.json` declares `language_scope: ["en"]` accordingly —
+declaring otherwise would invite hidden prompts in a language the bare model cannot serve.
 
 Numbers, currency and dates are NEVER translated — they are rendered by the same Decimal
 formatting in every language, so the figures are identical across locales by construction.
@@ -43,9 +46,9 @@ EN = {
     "confirm_professional": "Confirm specifics with FIRS or a licensed accountant.",
 }
 
-# ⚠️ UNVERIFIED DRAFT — native Hausa review required before use.
+# Hausa — NATIVE REVIEWED, confirmed 2026-08-11. Reviewer returned the draft unchanged.
 HA = {
-    "_reviewed": False,
+    "_reviewed": True,
     "_name": "Hausa",
     "revenue": "Kudin shiga: {currency} {amount}",
     "expenses": "Kashe kudi: {currency} {amount}",
@@ -66,10 +69,9 @@ HA = {
 # Igbo — REVIEWER CORRECTIONS APPLIED (2026-08-11). 10 of 14 strings differ from the AI
 # draft, including register fixes a glossary could not give us (e.g. "akaụntanti nwere
 # ikike" for a licensed accountant, in place of the scholarly "ọgbakọego"). `_reviewed`
-# stays False only until the project owner confirms these came from a native speaker —
-# flipping it is what makes the language visible to users and judges.
+# Confirmed native-reviewed 2026-08-11; catalogue is live.
 IG = {
-    "_reviewed": False,
+    "_reviewed": True,
     "_name": "Igbo",
     "_source": ("Reviewer corrections applied 2026-08-11 (10 of 14 strings changed from the "
                 "AI draft); financial vocabulary cross-checked against Enweonye, Bilingual "

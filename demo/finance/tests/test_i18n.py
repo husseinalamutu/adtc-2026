@@ -41,13 +41,26 @@ def test_every_language_renders_identical_figures(health):
             f"{lang} rendered different figures than English"
 
 
-def test_unreviewed_languages_are_hidden_by_default():
-    """Draft translations must not reach a user until a native speaker signs off."""
-    assert i18n.available() == ["en"]
+def test_only_native_reviewed_languages_are_offered():
+    """Reviewed languages are live; drafts stay invisible until a native speaker signs off.
+    Hausa and Igbo were confirmed 2026-08-11; Yoruba is drafted but not claimed."""
+    assert set(i18n.available()) == {"en", "ha", "ig"}
     assert set(i18n.available(include_unreviewed=True)) == {"en", "ha", "ig", "yo"}
-    assert i18n.is_reviewed("en")
-    for lang in ("ha", "ig", "yo"):
-        assert not i18n.is_reviewed(lang), f"{lang} must stay unreviewed until verified"
+    for lang in ("en", "ha", "ig"):
+        assert i18n.is_reviewed(lang)
+    assert not i18n.is_reviewed("yo"), "Yoruba is unreviewed and must not be offered"
+
+
+def test_offered_languages_render_without_falling_back_to_english():
+    """A live language must have its own string for every key — a silent English
+    fallback mid-report would look broken to a judge reading in Hausa or Igbo."""
+    for lang in ("ha", "ig"):
+        for key in (k for k in i18n.EN if not k.startswith("_")):
+            assert i18n.CATALOGUES[lang].get(key), f"{lang} missing {key}"
+            assert i18n.t(key, lang, currency="NGN", amount="1,000.00", overdue="0.00",
+                          pct="5.0", name="Test", days=3) != i18n.t(
+                          key, "en", currency="NGN", amount="1,000.00", overdue="0.00",
+                          pct="5.0", name="Test", days=3), f"{lang}.{key} is identical to English"
 
 
 def test_all_catalogues_cover_the_same_keys():

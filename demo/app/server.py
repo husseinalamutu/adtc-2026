@@ -149,7 +149,14 @@ def do_business(p: dict) -> dict:
         verified = h.as_ground_truth("NGN")
         localised = i18n.render_health(h, lang) if lang != "en" else None
     elif kind == "anomalies":
-        verified, localised = anomalies_text(detect(store)), None
+        items = detect(store)
+        verified = anomalies_text(items)
+        localised = None
+        if lang != "en" and items:
+            top = items[0]
+            localised = i18n.t("duplicate_payment", lang, currency="NGN",
+                               amount=i18n.money(top.amount), name=top.counterparty or "?") \
+                if top.kind == "duplicate_payment" else None
     elif kind == "forecast":
         verified, localised = project(store, as_of, committed_obligations=obligations
                                       ).as_ground_truth("NGN"), None
@@ -164,7 +171,8 @@ def do_business(p: dict) -> dict:
         verified, localised = recommend(store, as_of, committed_obligations=obligations
                                         ).as_ground_truth("NGN"), None
 
-    return {"verified": verified, "localised": localised,
+    return {"verified": verified, "localised": localised, "lang": lang,
+            "languages": [{"code": c, "name": i18n.language_name(c)} for c in i18n.available()],
             "txn_count": len(store.transactions()),
             "narrative": _narrate(BUSINESS_ASKS.get(kind, BUSINESS_ASKS["health"]), verified)}
 

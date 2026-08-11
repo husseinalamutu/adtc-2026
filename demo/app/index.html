@@ -70,6 +70,12 @@
     <div class="row" style="margin-top:12px">
       <div><label>Known supplier obligations next month (₦, optional)</label>
         <input id="bz-obl" placeholder="4200000"></div>
+      <div><label>Language</label>
+        <select id="bz-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit">
+          <option value="en">English</option>
+          <option value="ha">Hausa</option>
+          <option value="ig">Igbo</option>
+        </select></div>
     </div>
     <details style="margin-top:12px">
       <summary class="muted">Use my own data instead of the sample business</summary>
@@ -178,10 +184,12 @@ async function biz(kind) {
   tab.querySelector(".spin").style.display = "inline";
   try {
     const r = await fetch("/api/business", { method:"POST", headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ kind, obligations: $("#bz-obl").value || null }) });
+      body: JSON.stringify({ kind, obligations: $("#bz-obl").value || null,
+                             lang: $("#bz-lang").value }) });
     const d = await r.json();
     tab.querySelector(".result").style.display = "block";
-    tab.querySelector(".verified .v").textContent = d.error ? ("Problem: " + d.error) : d.verified;
+    tab.querySelector(".verified .v").textContent = d.error ? ("Problem: " + d.error)
+      : (d.localised ? d.localised + "\n\n— — —\n" + d.verified : d.verified);
     tab.querySelector(".narr .n").textContent = d.narrative ||
       "(model offline — start llama-server for the plain-language explanation; the figures above are complete without it)";
     if (d.txn_count) $("#bz-count").textContent = `Reading ${d.txn_count} transactions.`;
