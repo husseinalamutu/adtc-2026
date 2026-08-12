@@ -34,7 +34,7 @@ purely to make dataset generation free; see `generators/_gemini_common.py` heade
 
 Never invert the templated/teacher split — don't ask the teacher model to do the arithmetic (it
 will occasionally get it wrong and you'd be baking errors into training data), and don't
-hand-template the advisory content (it reads robotic and won't generalize to the 2 hidden
+hand-template the advisory content (it reads robotic and won't generalize to the 3 hidden
 judge prompts).
 
 ## The Nigeria fact base — how it was built and why to trust it
