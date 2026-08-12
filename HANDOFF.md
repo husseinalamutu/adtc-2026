@@ -8,7 +8,7 @@ financial intelligence engine, a demo app, and Hausa + Igbo output.
 Read this + `STRATEGY.md` + `build/results/*.md` first. History lives in the results docs.
 
 ## Project one-liner
-ADTC-2026 entry: offline **financial intelligence engine** for African SMEs. Qwen2.5-3B QLoRA
+ADTC-2026 entry: offline **financial intelligence engine** for Nigerian SMEs. Qwen2.5-3B QLoRA
 → imatrix Q4_K_M GGUF (~1.93 GB), domain `corporate_enterprise`.
 Repo: https://github.com/husseinalamutu/adtc-2026
 Model: https://huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf

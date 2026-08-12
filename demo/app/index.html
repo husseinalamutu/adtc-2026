@@ -53,7 +53,6 @@
     <button data-tab="business" class="active">Ask my business</button>
     <button data-tab="reconcile">Reconcile a payment</button>
     <button data-tab="tax">Tax question</button>
-    <button data-tab="quote">Make a quote</button>
   </nav>
 
   <!-- ASK MY BUSINESS -->
@@ -159,20 +158,6 @@
     </div>
   </section>
 
-  <!-- QUOTE -->
-  <section class="card tab" id="tab-quote" hidden>
-    <p class="muted">List the items; VAT and totals are computed, then the copilot drafts the
-    customer-facing message.</p>
-    <label>Items (one per line:&nbsp; description, qty, unit price)</label>
-    <textarea id="qt-items" placeholder="Bags of cement, 10, 8500&#10;(₦ and thousands separators are fine: Bags of cement, 10, ₦10,500)"></textarea>
-    <div class="chips"><button onclick="qtExample()">Example: 10 bags of cement @ ₦8,500</button></div>
-    <button class="go" onclick="run('quote')">Build quote</button><span class="spin">computing…</span>
-    <div class="result">
-      <h3>Result</h3>
-      <div class="verified"><h4>Verified figures — VAT engine</h4><div class="v"></div></div>
-      <div class="narr"><h4>Copilot drafts</h4><div class="n"></div></div>
-    </div>
-  </section>
 </main>
 <footer>Runs entirely on this machine — model: alamz-tech-sme-copilot (Qwen2.5-3B QLoRA, Q4_K_M) via llama.cpp ·
 figures: deterministic finance module · facts: Nigeria Tax Acts 2025 (verified corpus)</footer>
@@ -200,7 +185,6 @@ function txExample(i) {
   const [q, t, a, p] = TX[i];
   $("#tx-q").value = q; $("#tx-turn").value = t; $("#tx-ass").value = a; $("#tx-prof").checked = p;
 }
-function qtExample() { $("#qt-items").value = "Bags of cement, 10, 8500"; }
 
 async function biz(kind) {
   const tab = $("#tab-business");
@@ -278,7 +262,7 @@ function payload(task) {
   if (task === "tax")
     return { question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
              fixed_assets: $("#tx-ass").value || null, professional_services: $("#tx-prof").checked };
-  return { items_text: $("#qt-items").value };
+  return {};
 }
 
 async function run(task) {

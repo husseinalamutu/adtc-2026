@@ -171,36 +171,13 @@ def do_tax(p: dict) -> dict:
                                   verified)}
 
 
-def do_quote(p: dict) -> dict:
-    raw = p.get("items_text")
-    entries = parse_item_lines(raw) if raw is not None else p.get("items", [])
-    items = [(i["desc"], int(_money(i["qty"])), _money(i["unit_price"]))
-             for i in entries if i.get("desc")]
-    currency = p.get("currency", "NGN")
-    subtotal = sum((q * u for _, q, u in items), Decimal("0"))
-    q = RULES.vat_quote(subtotal)
-    lines = "\n".join(f"{d}: {n} x {currency} {u:,} = {currency} {n*u:,}" for d, n, u in items)
-    verified = (f"{lines}\nSubtotal: {currency} {q['subtotal']:,}\n"
-                f"VAT ({q['vat_rate']:.1%}): {currency} {q['vat']:,}\n"
-                f"TOTAL: {currency} {q['total']:,}")
-    return {"verified": verified,
-            "narrative": _narrate("Draft a short, polite customer quote from these figures. "
-                                  "Keep the line labels exactly as given (Subtotal, VAT, TOTAL).",
-                                  verified)}
-
-
-def _business_store() -> Store:
-    """The operator's books — EMPTY until they import their own data.
-
-    Deliberately not pre-loaded with the sample business: an app that says "your books"
-    while showing generated demo figures is lying to the user, and a walkthrough is far
-    more convincing when the presenter pastes real data and the numbers appear. The sample
-    business is still available, but only on explicit request (`/api/load_sample`)."""
-    global _STORE
-    if _STORE is None:
-        _STORE = Store(":memory:")
-    return _STORE
-
+# NOTE: the "make a quote" feature was REMOVED deliberately (2026-08-12). In Nigeria most
+# manufacturer-priced goods — cement, petrol, regulated items — are quoted VAT-INCLUSIVE, so a
+# tool that always adds 7.5% on top would overcharge the customer and misstate the retailer's
+# VAT. Handling that correctly needs an inclusive/exclusive distinction per line item; until
+# that exists, shipping the naive version would give confidently wrong figures on exactly the
+# goods our users trade most. `TaxRules.vat_quote` remains in the engine (tested) for the
+# tax tab's arithmetic.
 
 # Real exports don't use our column names. Map the common variants once, here.
 _COLS = {
@@ -380,7 +357,7 @@ def do_import(p: dict) -> dict:
             "narrative": None, "txn_count": n}
 
 
-ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
+ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax,
           "/api/load_sample": do_load_sample, "/api/upload": do_upload,
           "/api/business": do_business, "/api/import": do_import}
 

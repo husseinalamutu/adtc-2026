@@ -1,4 +1,4 @@
-# ADTC 2026 — Offline Back-Office Copilot for African SMEs
+# ADTC 2026 — Offline Back-Office Copilot for Nigerian SMEs
 
 Our entry for the [Africa Deep Tech Challenge 2026](https://africadeeptech.org/challenge-2026/)
 (Laptop LLM Challenge). A single Q4_K_M GGUF, fine-tuned for informal-sector SME back-office work
@@ -13,7 +13,7 @@ on an 8 GB laptop.
 | `infra/` | Provision a target-class benchmarking VM (4 vCPU / 8 GB / no GPU). |
 | `benchmark/` | Baseline candidate models; the telemetry regression test (RSS < 6.5 GB; TPS informational — scored relative to the field). |
 | `build/` | Fine-tune → merge → GGUF → imatrix → quantize recipe (one command rebuilds the exact model). |
-| `eval/` | Domain accuracy smoke tests + overfit hold-out (proxy for the 2 hidden prompts). |
+| `eval/` | Domain accuracy smoke tests + overfit hold-out (proxy for the 3 hidden prompts). |
 | `demo/` | Offline demo app (LLM + finance/tax integration) for the video & live defense. |
 | `submission/` | What gets forked into the official template: `metadata.json`, `download_model.sh`, `REPORT.md`. |
 

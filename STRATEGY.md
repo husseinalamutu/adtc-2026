@@ -16,7 +16,7 @@ Stay ≤ 3.5 GB peak RSS with margin.
 | Decision | Choice | Why |
 |---|---|---|
 | Domain | `corporate_enterprise` | The person at an 8GB laptop is a literate SME operator, not a feature-phone farmer. Matches the human to the hardware. |
-| Use case | **Offline back-office copilot for informal-sector African SMEs** | Invoices/quotes, **mobile-money (M-Pesa/MoMo) reconciliation**, **local VAT/tax & compliance** Q&A, multi-currency, WhatsApp-commerce order tracking. Runs offline = the real reason cloud SaaS never reached these businesses. |
+| Use case | **Offline back-office copilot for informal-sector Nigerian SMEs** | Invoices/quotes, **mobile-money (M-Pesa/MoMo) reconciliation**, **local VAT/tax & compliance** Q&A, multi-currency, WhatsApp-commerce order tracking. Runs offline = the real reason cloud SaaS never reached these businesses. |
 | African bonus | Earn via **use case**, English-only | `african_alpha_claim: true`. African-ness is *structural* (mobile-money, local tax regimes), not cosmetic. |
 | Language | English primary (hidden prompts are English) | Drop Best Localisation; put 100% into accuracy. |
 | Cross-disciplinary pairing (load-bearing) | LLM + **offline finance/accounting engine + local regulatory corpus** | Model reasons; a deterministic ledger/tax module does the math and cites rules. This is the demo's spine. |
@@ -39,10 +39,10 @@ Stay ≤ 3.5 GB peak RSS with margin.
 - Bonuses: `budget_laptop_claim:true` (+10%, everyone), `african_alpha_claim:true` (+15%, differentiator — website says "on panel score", so treat absolute bonus math as optimistic).
 
 ## Accuracy mechanism (verified from template)
-- `metadata.json` has **exactly 2** `test_prompts`. Organizers add **2 hidden** in-domain prompts. **All 4** score the model.
+- `metadata.json` has **exactly 2** `test_prompts`. Organizers add **3 hidden** in-domain prompts (verified on the challenge site 2026-07-20 — it was 2 in the 07-07 snapshot). **All 5** score the model, so hidden prompts are 60% of the accuracy sample.
 - Public profiler runs with `--skip-accuracy`; accuracy judged officially (LLM-audit + panel).
 - ⇒ The **bare model** must be good on our domain. **Fine-tune it. Don't rely on RAG the sandbox won't run.**
-- ⇒ Our 2 test prompts must be *representative, not cherry-picked* (hidden 2 punish overfitting). Keep a hold-out set.
+- ⇒ Our 2 test prompts must be *representative, not cherry-picked* (the 3 hidden prompts punish overfitting). Keep a hold-out set.
 
 ## Hard gates (do not violate)
 - Peak RSS < 7 GB (target ≤ 3.5). OOM/crash = 0.

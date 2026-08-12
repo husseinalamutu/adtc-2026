@@ -25,7 +25,7 @@ tags:
 > *Qwen is licensed under the Qwen RESEARCH LICENSE AGREEMENT, Copyright (c) Alibaba Cloud.
 > All Rights Reserved.*
 
-An **offline back-office copilot for African small businesses** — invoices and quotes,
+An **offline back-office copilot for Nigerian small businesses** — invoices and quotes,
 mobile-money (MoMo/M-Pesa) reconciliation, and **Nigeria's 2025 Tax Reform Acts** —
 built for the 8 GB laptops with integrated graphics that SMEs actually own.
 ALAMZ TECH's entry to the **Africa Deep Tech Challenge 2026** (domain: corporate/enterprise).

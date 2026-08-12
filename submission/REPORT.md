@@ -1,4 +1,4 @@
-# ADTC 2026 — Offline Back-Office Copilot for African SMEs
+# ADTC 2026 — Offline Back-Office Copilot for Nigerian SMEs
 
 **Domain:** `corporate_enterprise` · **Runtime:** llama.cpp · **Model:** Qwen2.5-3B QLoRA → imatrix Q4_K_M GGUF (~1.93 GB)
 **African use case:** ✅ (Nigeria-deep tax + mobile-money reconciliation) · **Budget-laptop:** ✅
@@ -15,7 +15,7 @@ reliable internet they don't have, and doesn't understand how their business act
 **mobile money** (M-Pesa, MTN MoMo, Airtel Money), in local currency, under local tax rules.
 
 Our model is an **offline back-office copilot** for exactly this operator. It:
-- drafts **invoices, quotes and receipts** with correct VAT and multi-currency arithmetic;
+- computes **VAT, margins and multi-currency arithmetic** exactly (`Decimal`, never floats);
 - **reconciles mobile-money statements** against outstanding invoices ("this NGN 45,000 MoMo
   payment settles INV-2001");
 - answers **local tax & compliance** questions — grounded in the **Nigeria Tax Reform Acts 2025**
