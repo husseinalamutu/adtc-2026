@@ -225,8 +225,8 @@ async function biz(kind) {
     if (d.error) body = "Problem: " + d.error;
     else if (d.localised) body = d.localised + "\n\n— — —  (English detail below)\n" + d.verified;
     else if (d.lang && d.lang !== "en")
-      body = `(This screen isn't available in ${langName} yet — a native reviewer has to supply `
-           + `the wording before we ship it. Showing English.)\n\n` + d.verified;
+      body = `(Showing English — ${langName} is available on the business summary, `
+           + `unusual transactions, cash forecast and recommended actions.)\n\n` + d.verified;
     else body = d.verified;
     tab.querySelector(".verified .v").textContent = body;
     tab.querySelector(".narr .n").textContent = d.narrative ||
