@@ -141,7 +141,7 @@
     <p class="muted">List the items; VAT and totals are computed, then the copilot drafts the
     customer-facing message.</p>
     <label>Items (one per line:&nbsp; description, qty, unit price)</label>
-    <textarea id="qt-items" placeholder="Bags of cement, 10, 8500"></textarea>
+    <textarea id="qt-items" placeholder="Bags of cement, 10, 8500&#10;(₦ and thousands separators are fine: Bags of cement, 10, ₦10,500)"></textarea>
     <div class="chips"><button onclick="qtExample()">Example: 10 bags of cement @ ₦8,500</button></div>
     <button class="go" onclick="run('quote')">Build quote</button><span class="spin">computing…</span>
     <div class="result">
@@ -212,20 +212,14 @@ async function importCsv() {
 
 function payload(task) {
   if (task === "reconcile") {
-    const invoices = $("#rc-invs").value.trim().split("\n").filter(Boolean).map(l => {
-      const [id, amount] = l.split(","); return { id: id.trim(), amount: (amount || "0").trim() };
-    });
     const lump = $("#rc-lump").checked;
-    return { statement: $("#rc-stmt").value, invoices,
+    return { statement: $("#rc-stmt").value, invoices_text: $("#rc-invs").value,
              mode: lump ? "lump" : "exact", lump_amount: lump ? $("#rc-amt").value || "0" : null };
   }
   if (task === "tax")
     return { question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
              fixed_assets: $("#tx-ass").value || null, professional_services: $("#tx-prof").checked };
-  return { items: $("#qt-items").value.trim().split("\n").filter(Boolean).map(l => {
-    const [desc, qty, unit_price] = l.split(",");
-    return { desc: (desc||"").trim(), qty: (qty||"1").trim(), unit_price: (unit_price||"0").trim() };
-  }) };
+  return { items_text: $("#qt-items").value };
 }
 
 async function run(task) {

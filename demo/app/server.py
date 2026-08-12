@@ -14,6 +14,7 @@ Run: bash demo/app/run_demo.sh   (or: python3 demo/app/server.py)
 from __future__ import annotations
 
 import json
+import re
 import sys
 import urllib.error
 import urllib.request
@@ -62,6 +63,72 @@ def _narrate(user_msg: str, verified: str | None) -> str | None:
         return None
 
 
+# Operators type money the way they say it: "10,500", "N10,500", "₦10,500.00".
+# A naive split(",") mangles that, so we FIRST strip thousands separators, THEN split.
+#
+# A thousands separator is a comma followed IMMEDIATELY by exactly three digits
+# ("10,500"). A field separator is a comma followed by a space ("cement, 10"). Refusing to
+# treat ", 500" as a thousands separator is deliberate: "Item, 100, 500" would otherwise be
+# silently misread, and a silently wrong total on someone's invoice is the worst failure
+# this app can have. Fields are taken from the RIGHT (price last, qty second-last) so a
+# description may itself contain commas: "Cement, bagged (50kg), 10, 8500".
+_THOUSANDS = re.compile(r",(?=\d{3}(?:\D|$))")
+_CURRENCY = re.compile(r"(?:NGN|₦|N)\s*", re.IGNORECASE)
+
+
+def _money(text) -> Decimal:
+    """'₦10,500.00' / 'N10500' / '10,500' -> Decimal. Raises on genuine junk."""
+    cleaned = _CURRENCY.sub("", _THOUSANDS.sub("", str(text))).strip()
+    if not re.fullmatch(r"\d+(?:\.\d+)?", cleaned):
+        raise ValueError(f"not a valid amount: {text!r}")
+    return Decimal(cleaned)
+
+
+def _split_fields(raw: str, n: int) -> list[str]:
+    """Strip thousands separators, then split into exactly n fields from the right."""
+    parts = [p.strip() for p in _THOUSANDS.sub("", raw).split(",")]
+    if len(parts) < n:
+        return []
+    # everything before the last n-1 fields belongs to the description/id
+    head = ", ".join(parts[: len(parts) - (n - 1)]).strip()
+    return [head, *parts[len(parts) - (n - 1):]]
+
+
+def parse_item_lines(text: str) -> list[dict]:
+    """Parse 'Bags of cement, 10, ₦10,500' lines. Reports the offending line on failure so
+    the operator fixes their input rather than seeing a silently wrong total."""
+    out = []
+    for raw in (text or "").splitlines():
+        if not raw.strip():
+            continue
+        fields = _split_fields(raw, 3)
+        if not fields or not fields[0]:
+            raise ValueError(f"expected 'description, quantity, unit price' — got: {raw.strip()!r}")
+        desc, qty, price = fields
+        try:
+            out.append({"desc": desc, "qty": str(int(_money(qty))), "unit_price": str(_money(price))})
+        except (ValueError, ArithmeticError) as e:
+            raise ValueError(f"{e} in line: {raw.strip()!r}") from None
+    return out
+
+
+def parse_invoice_lines(text: str) -> list[dict]:
+    """Parse 'INV-114, ₦85,000' lines."""
+    out = []
+    for raw in (text or "").splitlines():
+        if not raw.strip():
+            continue
+        fields = _split_fields(raw, 2)
+        if not fields or not fields[0]:
+            raise ValueError(f"expected 'invoice id, amount' — got: {raw.strip()!r}")
+        inv_id, amount = fields
+        try:
+            out.append({"id": inv_id, "amount": str(_money(amount))})
+        except (ValueError, ArithmeticError) as e:
+            raise ValueError(f"{e} in line: {raw.strip()!r}") from None
+    return out
+
+
 def _dec(x) -> Decimal:
     return Decimal(str(x))
 
@@ -69,11 +136,13 @@ def _dec(x) -> Decimal:
 # ---- task handlers: module first, narrative second ----
 
 def do_reconcile(p: dict) -> dict:
-    invoices = [Invoice(i["id"].strip(), _dec(i["amount"])) for i in p["invoices"] if i.get("id")]
+    raw_inv = p.get("invoices_text")
+    entries = parse_invoice_lines(raw_inv) if raw_inv is not None else p.get("invoices", [])
+    invoices = [Invoice(i["id"].strip(), _money(i["amount"])) for i in entries if i.get("id")]
     currency = p.get("currency", "NGN")
     if p.get("mode") == "lump":
-        alloc = allocate_lump_sum(_dec(p["lump_amount"]), invoices)
-        asked = f"A customer paid {currency} {_dec(p['lump_amount']):,} covering: " + \
+        alloc = allocate_lump_sum(_money(p["lump_amount"]), invoices)
+        asked = f"A customer paid {currency} {_money(p['lump_amount']):,} covering: " + \
                 ", ".join(f"{i.invoice_id} ({currency} {i.amount:,})" for i in invoices)
         parsed = []
     else:
@@ -101,7 +170,10 @@ def do_tax(p: dict) -> dict:
 
 
 def do_quote(p: dict) -> dict:
-    items = [(i["desc"], int(i["qty"]), _dec(i["unit_price"])) for i in p["items"] if i.get("desc")]
+    raw = p.get("items_text")
+    entries = parse_item_lines(raw) if raw is not None else p.get("items", [])
+    items = [(i["desc"], int(_money(i["qty"])), _money(i["unit_price"]))
+             for i in entries if i.get("desc")]
     currency = p.get("currency", "NGN")
     subtotal = sum((q * u for _, q, u in items), Decimal("0"))
     q = RULES.vat_quote(subtotal)
