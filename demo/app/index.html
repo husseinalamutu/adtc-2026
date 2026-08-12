@@ -190,6 +190,7 @@ document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
   document.querySelectorAll(".tab").forEach(x => x.hidden = true);
   b.classList.add("active"); $("#tab-" + b.dataset.tab).hidden = false;
 });
+$("#bz-lang").onchange = () => { if (lastScenario) biz(lastScenario); };
 $("#rc-lump").onchange = e => $("#rc-amt").style.display = e.target.checked ? "block" : "none";
 
 function rcExample() {
@@ -207,7 +208,10 @@ function txExample(i) {
   $("#tx-q").value = q; $("#tx-turn").value = t; $("#tx-ass").value = a; $("#tx-prof").checked = p;
 }
 
+let lastScenario = null;
+
 async function biz(kind) {
+  lastScenario = kind;
   const tab = $("#tab-business");
   tab.querySelector(".spin").style.display = "inline";
   try {
@@ -216,8 +220,15 @@ async function biz(kind) {
                              lang: $("#bz-lang").value }) });
     const d = await r.json();
     tab.querySelector(".result").style.display = "block";
-    tab.querySelector(".verified .v").textContent = d.error ? ("Problem: " + d.error)
-      : (d.localised ? d.localised + "\n\n— — —\n" + d.verified : d.verified);
+    const langName = { en: "English", ha: "Hausa", ig: "Igbo" }[d.lang || "en"];
+    let body;
+    if (d.error) body = "Problem: " + d.error;
+    else if (d.localised) body = d.localised + "\n\n— — —  (English detail below)\n" + d.verified;
+    else if (d.lang && d.lang !== "en")
+      body = `(This screen isn't available in ${langName} yet — a native reviewer has to supply `
+           + `the wording before we ship it. Showing English.)\n\n` + d.verified;
+    else body = d.verified;
+    tab.querySelector(".verified .v").textContent = body;
     tab.querySelector(".narr .n").textContent = d.narrative ||
       "(model offline — start llama-server for the plain-language explanation; the figures above are complete without it)";
     if (d.txn_count) showLoaded(d.txn_count);
