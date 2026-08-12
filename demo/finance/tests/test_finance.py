@@ -111,3 +111,43 @@ def test_turnover_above_threshold_not_small():
     """The def-4 eval case: 120M > 100M -> not small (the applied conclusion, computed)."""
     v = TaxRules().small_company_assessment(120_000_000, 50_000_000, professional_services=False)
     assert "NOT a small company" in v.verdict and "exceeds" in v.verdict
+
+
+# --- VAT inclusive vs exclusive (Nigerian manufacturer pricing) ---
+
+def test_vat_exclusive_adds_on_top():
+    q = TaxRules().vat_quote(105000, inclusive=False)
+    assert q["subtotal"] == Decimal("105000.00")
+    assert q["vat"] == Decimal("7875.00")
+    assert q["total"] == Decimal("112875.00")
+
+
+def test_vat_inclusive_extracts_rather_than_adds():
+    """Cement/petrol prices already contain VAT: ₦105,000 gross -> ₦7,325.58 VAT,
+    NOT ₦7,875. Adding again would overcharge the customer and overstate output VAT."""
+    q = TaxRules().vat_quote(105000, inclusive=True)
+    assert q["total"] == Decimal("105000.00")
+    assert q["vat"] == Decimal("7325.58")
+    assert q["subtotal"] == Decimal("97674.42")
+
+
+def test_vat_lines_always_reconcile_in_both_modes():
+    rules = TaxRules()
+    for amount in (105000, 8500, 1, 999999.99):
+        for inclusive in (False, True):
+            q = rules.vat_quote(amount, inclusive=inclusive)
+            assert q["subtotal"] + q["vat"] == q["total"], (amount, inclusive)
+
+
+def test_inclusive_net_times_rate_equals_the_extracted_vat():
+    """The extracted VAT must be exactly 7.5% of the derived net — otherwise the seller's
+    VAT return would not tie back to the invoice."""
+    rules = TaxRules()
+    q = rules.vat_quote(105000, inclusive=True)
+    assert (q["subtotal"] * rules.vat_rate).quantize(Decimal("0.01")) == q["vat"]
+
+
+def test_inclusive_total_is_lower_than_exclusive_total_for_the_same_figure():
+    rules = TaxRules()
+    assert rules.vat_quote(100000, inclusive=True)["total"] < \
+           rules.vat_quote(100000, inclusive=False)["total"]

@@ -53,6 +53,7 @@
     <button data-tab="business" class="active">Ask my business</button>
     <button data-tab="reconcile">Reconcile a payment</button>
     <button data-tab="tax">Tax question</button>
+    <button data-tab="quote">Make a quote</button>
   </nav>
 
   <!-- ASK MY BUSINESS -->
@@ -114,7 +115,7 @@
   </section>
 
   <!-- RECONCILE -->
-  <section class="card tab" id="tab-reconcile">
+  <section class="card tab" id="tab-reconcile" hidden>
     <p class="muted">Paste the mobile-money statement (or a single payment) and your open invoices.
     The ledger computes what's settled; the copilot explains it.</p>
     <label>Mobile-money statement text</label>
@@ -158,6 +159,23 @@
     </div>
   </section>
 
+  <!-- QUOTE -->
+  <section class="card tab" id="tab-quote" hidden>
+    <p class="muted">List the items; VAT and totals are computed exactly. <strong>Check the VAT
+    setting</strong> — cement, petrol and most manufacturer-priced goods in Nigeria are already
+    quoted VAT-inclusive, so adding 7.5% on top would overcharge your customer.</p>
+    <label>Items (one per line:&nbsp; description, qty, unit price)</label>
+    <textarea id="qt-items" placeholder="Bags of cement, 10, 8500&#10;(₦ and thousands separators are fine: Bags of cement, 10, ₦10,500)"></textarea>
+    <div class="chips"><button onclick="qtExample()">Example: 10 bags of cement</button></div>
+    <label style="margin-top:12px"><input type="checkbox" id="qt-inc" style="width:auto">
+      My listed prices <strong>already include VAT</strong> (e.g. cement, petrol, most factory prices)</label>
+    <button class="go" onclick="run('quote')">Build quote</button><span class="spin">computing…</span>
+    <div class="result">
+      <h3>Result</h3>
+      <div class="verified"><h4>Verified figures — VAT engine</h4><div class="v"></div></div>
+      <div class="narr"><h4>Copilot drafts</h4><div class="n"></div></div>
+    </div>
+  </section>
 </main>
 <footer>Runs entirely on this machine — model: alamz-tech-sme-copilot (Qwen2.5-3B QLoRA, Q4_K_M) via llama.cpp ·
 figures: deterministic finance module · facts: Nigeria Tax Acts 2025 (verified corpus)</footer>
@@ -202,6 +220,8 @@ async function biz(kind) {
     if (d.txn_count) showLoaded(d.txn_count);
   } finally { tab.querySelector(".spin").style.display = "none"; }
 }
+
+function qtExample() { $("#qt-items").value = "Bags of cement, 10, 8500"; }
 
 function showLoaded(n) {
   $("#bz-import").style.display = n > 0 ? "none" : "block";
@@ -262,6 +282,8 @@ function payload(task) {
   if (task === "tax")
     return { question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
              fixed_assets: $("#tx-ass").value || null, professional_services: $("#tx-prof").checked };
+  if (task === "quote")
+    return { items_text: $("#qt-items").value, vat_inclusive: $("#qt-inc").checked };
   return {};
 }
 

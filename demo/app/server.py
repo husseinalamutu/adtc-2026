@@ -171,7 +171,38 @@ def do_tax(p: dict) -> dict:
                                   verified)}
 
 
-# NOTE: the "make a quote" feature was REMOVED deliberately (2026-08-12). In Nigeria most
+def do_quote(p: dict) -> dict:
+    """Build a quote, honouring whether the operator's prices already include VAT.
+
+    Restored 2026-08-12 with an explicit VAT mode. The earlier version always ADDED 7.5%,
+    which is wrong for the goods Nigerian retailers trade most — cement, petrol and other
+    manufacturer- or regulator-priced lines are quoted VAT-inclusive, so adding again
+    overcharges the customer and overstates output VAT."""
+    raw = p.get("items_text")
+    entries = parse_item_lines(raw) if raw is not None else p.get("items", [])
+    items = [(i["desc"], int(_money(i["qty"])), _money(i["unit_price"]))
+             for i in entries if i.get("desc")]
+    if not items:
+        return {"error": "no items — expected lines like 'Bags of cement, 10, 8500'"}
+    currency = p.get("currency", "NGN")
+    inclusive = bool(p.get("vat_inclusive"))
+    gross_or_net = sum((q * u for _, q, u in items), Decimal("0"))
+    q = RULES.vat_quote(gross_or_net, inclusive=inclusive)
+
+    lines = "\n".join(f"{d}: {n} x {currency} {u:,} = {currency} {n * u:,}" for d, n, u in items)
+    header = ("Listed prices INCLUDE VAT — VAT extracted, not added."
+              if inclusive else "Listed prices EXCLUDE VAT — VAT added on top.")
+    verified = (f"{header}\n{lines}\n"
+                f"Net of VAT: {currency} {q['subtotal']:,}\n"
+                f"VAT ({q['vat_rate']:.1%}): {currency} {q['vat']:,}\n"
+                f"TOTAL PAYABLE: {currency} {q['total']:,}")
+    return {"verified": verified,
+            "narrative": _narrate("Draft a short, polite customer quote from these figures. "
+                                  "Keep the labels exactly as given and do not recompute.",
+                                  verified)}
+
+
+# NOTE (historical): the quote feature was briefly removed on 2026-08-12. In Nigeria most
 # manufacturer-priced goods — cement, petrol, regulated items — are quoted VAT-INCLUSIVE, so a
 # tool that always adds 7.5% on top would overcharge the customer and misstate the retailer's
 # VAT. Handling that correctly needs an inclusive/exclusive distinction per line item; until
@@ -357,7 +388,7 @@ def do_import(p: dict) -> dict:
             "narrative": None, "txn_count": n}
 
 
-ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax,
+ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
           "/api/load_sample": do_load_sample, "/api/upload": do_upload,
           "/api/business": do_business, "/api/import": do_import}
 

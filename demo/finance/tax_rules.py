@@ -59,11 +59,28 @@ class TaxRules:
             out.append(node.get("cite") or node.get("note") or path)
         return tuple(out)
 
-    def vat_quote(self, subtotal) -> dict:
-        """Deterministic VAT line for a quote/invoice."""
-        sub = Decimal(str(subtotal)).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
-        vat = (sub * self.vat_rate).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
-        return {"subtotal": sub, "vat_rate": self.vat_rate, "vat": vat, "total": sub + vat}
+    def vat_quote(self, amount, inclusive: bool = False) -> dict:
+        """Deterministic VAT lines for a quote/invoice.
+
+        `inclusive=False` — the figure is the NET price; VAT is added on top.
+        `inclusive=True`  — the figure ALREADY contains VAT, so it must be extracted, not
+        added: net = gross ÷ 1.075 and VAT = gross × 7.5/107.5. This matters in Nigeria
+        because manufacturer- and regulator-set prices (cement, petrol, many FMCG lines) are
+        quoted VAT-inclusive; adding 7.5% on top of those overcharges the customer and
+        overstates the seller's output VAT. Getting this backwards is a real-money error, so
+        the mode is explicit rather than assumed.
+        """
+        figure = Decimal(str(amount)).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+        if inclusive:
+            total = figure
+            net = (total / (1 + self.vat_rate)).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+            vat = total - net          # derived by subtraction so the three always reconcile
+        else:
+            net = figure
+            vat = (net * self.vat_rate).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+            total = net + vat
+        return {"subtotal": net, "vat_rate": self.vat_rate, "vat": vat, "total": total,
+                "inclusive": inclusive}
 
     def small_company_assessment(self, turnover, fixed_assets,
                                  professional_services: bool) -> Verdict:
