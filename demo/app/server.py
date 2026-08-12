@@ -188,14 +188,27 @@ def do_quote(p: dict) -> dict:
 
 
 def _business_store() -> Store:
-    """The demo's books. Loaded once with the generated sample business so the app has
-    something real to reason over; `import_transactions_csv` replaces it with the
-    operator's own data."""
+    """The operator's books — EMPTY until they import their own data.
+
+    Deliberately not pre-loaded with the sample business: an app that says "your books"
+    while showing generated demo figures is lying to the user, and a walkthrough is far
+    more convincing when the presenter pastes real data and the numbers appear. The sample
+    business is still available, but only on explicit request (`/api/load_sample`)."""
     global _STORE
     if _STORE is None:
         _STORE = Store(":memory:")
-        sample_data.load_into(_STORE)
     return _STORE
+
+
+def do_load_sample(p: dict) -> dict:
+    """Explicitly load the generated sample business — for anyone who wants a quick look
+    without typing data. Never loaded implicitly."""
+    store = _business_store()
+    sample_data.load_into(store)
+    n = len(store.transactions())
+    return {"txn_count": n, "has_data": n > 0,
+            "message": f"Sample business loaded — {n} transactions (a Lagos "
+                       f"building-materials retailer, 6 months of trading)."}
 
 
 _STORE: Store | None = None
@@ -210,6 +223,11 @@ BUSINESS_ASKS = {
 
 def do_business(p: dict) -> dict:
     """The 'Ask My Business' scenarios — engine computes, model explains."""
+    store_check = _business_store()
+    if not store_check.transactions():
+        return {"verified": None, "narrative": None, "txn_count": 0, "has_data": False,
+                "error": "No transactions loaded yet. Paste your CSV above (or load the "
+                         "sample business) and the engine will compute from your own books."}
     kind = p.get("kind", "health")
     as_of = date.fromisoformat(p.get("as_of") or "2026-06-15")
     obligations = _dec(p["obligations"]) if p.get("obligations") else None
@@ -245,7 +263,7 @@ def do_business(p: dict) -> dict:
 
     return {"verified": verified, "localised": localised, "lang": lang,
             "languages": [{"code": c, "name": i18n.language_name(c)} for c in i18n.available()],
-            "txn_count": len(store.transactions()),
+            "txn_count": len(store.transactions()), "has_data": True,
             "narrative": _narrate(BUSINESS_ASKS.get(kind, BUSINESS_ASKS["health"]), verified)}
 
 
@@ -273,6 +291,7 @@ def do_import(p: dict) -> dict:
 
 
 ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
+          "/api/load_sample": do_load_sample,
           "/api/business": do_business, "/api/import": do_import}
 
 

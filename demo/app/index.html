@@ -58,31 +58,45 @@
 
   <!-- ASK MY BUSINESS -->
   <section class="card tab" id="tab-business">
-    <p class="muted">Your books are on this laptop. The engine reads every transaction and
-    computes the answer; the copilot explains it. <span id="bz-count"></span></p>
-    <div class="chips">
-      <button onclick="biz('health')">What happened this month?</button>
-      <button onclick="biz('anomalies')">Anything unusual?</button>
-      <button onclick="biz('forecast')">Enough cash next month?</button>
-      <button onclick="biz('stock')">Cash tied up in stock?</button>
-      <button onclick="biz('actions')">What should I do?</button>
+    <p class="muted" id="bz-intro">
+      <strong>Your data stays on this laptop.</strong> Paste your transactions below — nothing
+      is uploaded, and no internet connection is used. The engine computes every figure from
+      your books; the copilot puts it in plain language.
+    </p>
+
+    <div id="bz-import">
+      <label>Your transactions (CSV: date, description, amount, category, counterparty, ref)</label>
+      <textarea id="bz-csv" style="min-height:120px" placeholder="date,description,amount,category,counterparty,ref
+2026-06-02,Counter sale,125000,Sales,Walk-in customer,TX9001
+2026-06-03,Cement delivery,-420000,Inventory purchase,Dangote Cement Depot,TX9002
+2026-06-05,Fuel for delivery van,-18000,Transport,,TX9003"></textarea>
+      <p class="muted" style="margin:6px 0 0">Negative amounts are money out; positive is money in.
+      Export this from your spreadsheet or bookkeeping app.</p>
+      <button class="go" onclick="importCsv()">Load my transactions</button>
+      <button class="go" style="background:#6b7c8d" onclick="loadSample()">Use a sample business instead</button>
     </div>
-    <div class="row" style="margin-top:12px">
-      <div><label>Known supplier obligations next month (₦, optional)</label>
-        <input id="bz-obl" placeholder="4200000"></div>
-      <div><label>Language</label>
-        <select id="bz-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit">
-          <option value="en">English</option>
-          <option value="ha">Hausa</option>
-          <option value="ig">Igbo</option>
-        </select></div>
+
+    <div id="bz-loaded" style="display:none">
+      <p class="muted"><strong id="bz-count"></strong>
+        <a href="#" onclick="resetData();return false" style="margin-left:10px">use different data</a></p>
+      <div class="chips">
+        <button onclick="biz('health')">What happened this month?</button>
+        <button onclick="biz('anomalies')">Anything unusual?</button>
+        <button onclick="biz('forecast')">Enough cash next month?</button>
+        <button onclick="biz('stock')">Cash tied up in stock?</button>
+        <button onclick="biz('actions')">What should I do?</button>
+      </div>
+      <div class="row" style="margin-top:12px">
+        <div><label>Known supplier obligations next month (₦, optional)</label>
+          <input id="bz-obl" placeholder="4200000"></div>
+        <div><label>Language</label>
+          <select id="bz-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit">
+            <option value="en">English</option>
+            <option value="ha">Hausa</option>
+            <option value="ig">Igbo</option>
+          </select></div>
+      </div>
     </div>
-    <details style="margin-top:12px">
-      <summary class="muted">Use my own data instead of the sample business</summary>
-      <label>Paste a transactions CSV (date, description, amount, category, counterparty, ref)</label>
-      <textarea id="bz-csv" placeholder="date,description,amount,category,counterparty,ref&#10;2026-03-02,Counter sale,125000,Sales,Walk-in,TX9001"></textarea>
-      <button class="go" onclick="importCsv()">Import my transactions</button>
-    </details>
     <span class="spin">computing…</span>
     <div class="result">
       <h3>Result</h3>
@@ -192,9 +206,29 @@ async function biz(kind) {
       : (d.localised ? d.localised + "\n\n— — —\n" + d.verified : d.verified);
     tab.querySelector(".narr .n").textContent = d.narrative ||
       "(model offline — start llama-server for the plain-language explanation; the figures above are complete without it)";
-    if (d.txn_count) $("#bz-count").textContent = `Reading ${d.txn_count} transactions.`;
+    if (d.txn_count) showLoaded(d.txn_count);
   } finally { tab.querySelector(".spin").style.display = "none"; }
 }
+
+function showLoaded(n) {
+  $("#bz-import").style.display = n > 0 ? "none" : "block";
+  $("#bz-loaded").style.display = n > 0 ? "block" : "none";
+  $("#bz-count").textContent = n > 0 ? n + " transactions loaded from your data." : "";
+  $("#bz-intro").innerHTML = n > 0
+    ? "<strong>Your data stays on this laptop.</strong> The engine computes every figure from these "
+      + n + " transactions; the copilot puts it in plain language. No internet is used."
+    : "<strong>Your data stays on this laptop.</strong> Paste your transactions below — nothing is "
+      + "uploaded, and no internet connection is used. The engine computes every figure from your "
+      + "books; the copilot puts it in plain language.";
+}
+
+async function loadSample() {
+  const r = await fetch("/api/load_sample", { method:"POST", headers:{ "Content-Type":"application/json" }, body:"{}" });
+  const d = await r.json();
+  showLoaded(d.txn_count || 0);
+}
+
+function resetData() { location.reload(); }
 
 async function importCsv() {
   const tab = $("#tab-business");
@@ -206,7 +240,7 @@ async function importCsv() {
     tab.querySelector(".result").style.display = "block";
     tab.querySelector(".verified .v").textContent = d.error ? ("Import failed: " + d.error) : d.verified;
     tab.querySelector(".narr .n").textContent = d.error ? "" : "Your data is loaded — ask a question above.";
-    if (d.txn_count) $("#bz-count").textContent = `Reading ${d.txn_count} transactions.`;
+    if (d.txn_count) showLoaded(d.txn_count);
   } finally { tab.querySelector(".spin").style.display = "none"; }
 }
 
