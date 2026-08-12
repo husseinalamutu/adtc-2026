@@ -13,25 +13,27 @@ Run: bash demo/app/run_demo.sh   (or: python3 demo/app/server.py)
 """
 from __future__ import annotations
 
+import base64
 import json
 import re
 import sys
 import urllib.error
 import urllib.request
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(APP_DIR.parent))  # demo/ -> import finance
-from finance import (Invoice, Store, TaxRules, allocate_lump_sum, i18n, parse_statement,
+from finance import (Invoice, Store, TaxRules, Txn, allocate_lump_sum, i18n, parse_statement,
                      reconcile_exact, sample_data)
 from finance.advisor import recommend
 from finance.analytics import business_health
 from finance.anomalies import as_ground_truth as anomalies_text
 from finance.anomalies import detect
 from finance.forecast import project
+from finance.spreadsheet import read_table, rows_to_dicts
 from finance.inventory import cash_conversion_cycle, position
 
 LLAMA_URL = "http://127.0.0.1:8080/v1/chat/completions"
@@ -200,6 +202,94 @@ def _business_store() -> Store:
     return _STORE
 
 
+# Real exports don't use our column names. Map the common variants once, here.
+_COLS = {
+    "date": ("date", "txn_date", "transaction_date", "value_date", "posted", "day"),
+    "description": ("description", "narration", "details", "particulars", "memo", "remarks"),
+    "amount": ("amount", "value", "credit_debit", "naira", "ngn"),
+    "category": ("category", "type", "class", "account"),
+    "counterparty": ("counterparty", "customer", "supplier", "payee", "name", "party"),
+    "ref": ("ref", "reference", "txn_id", "transaction_id", "id"),
+}
+
+
+def _pick(record: dict, field: str) -> str:
+    for key in _COLS[field]:
+        if record.get(key, "").strip():
+            return record[key].strip()
+    return ""
+
+
+def _ingest_records(store, records: list[dict]) -> tuple[int, int]:
+    """Turn parsed rows into transactions. Rows whose date or amount can't be read are
+    SKIPPED and counted, never guessed — a fabricated figure in someone's books is worse
+    than a smaller import."""
+    rows, skipped = [], 0
+    for rec in records:
+        raw_date, raw_amount = _pick(rec, "date"), _pick(rec, "amount")
+        if not raw_date or not raw_amount:
+            skipped += 1
+            continue
+        # Exports write money-out as "-420,000" or "(420,000)". _money() accepts only
+        # unsigned figures on purpose, so read the sign first and hand it the magnitude.
+        trimmed = raw_amount.strip()
+        negative = trimmed.startswith("-") or (trimmed.startswith("(") and trimmed.endswith(")"))
+        try:
+            txn_date = _parse_date(raw_date)
+            amount = _money(trimmed.lstrip("+-").strip("()"))
+        except (ValueError, ArithmeticError):
+            skipped += 1
+            continue
+        direction = "out" if negative else "in"
+        rows.append(Txn(_pick(rec, "ref") or f"IMP{len(rows) + 1:05d}", txn_date,
+                        _pick(rec, "description") or "(no description)", amount,
+                        direction, _pick(rec, "category") or None,
+                        _pick(rec, "counterparty") or None))
+    return (store.add_transactions(rows) if rows else 0), skipped
+
+
+def _parse_date(text: str) -> date:
+    text = text.strip().split(" ")[0]
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%Y/%m/%d", "%d.%m.%Y",
+                "%d %b %Y", "%d %B %Y"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+    raise ValueError(f"unrecognised date: {text!r}")
+
+
+def do_upload(p: dict) -> dict:
+    """Accept a real file (CSV / Excel) rather than pasted text — SMEs keep books in
+    spreadsheets, and asking them to copy CSV out of Excel is the wrong front door.
+    The file is decoded and parsed in-process; nothing is written to disk or sent anywhere."""
+    filename = p.get("filename", "")
+    try:
+        raw = base64.b64decode(p.get("content_b64", ""), validate=True)
+    except Exception:
+        return {"error": "could not read the uploaded file"}
+    if not raw:
+        return {"error": "the file is empty"}
+    try:
+        records = rows_to_dicts(read_table(filename, raw))
+    except ValueError as e:
+        return {"error": str(e)}
+    if not records:
+        return {"error": f"no rows found in {filename!r} — is the first row a header?"}
+    store = _business_store()
+    added, skipped = _ingest_records(store, records)
+    if not added:
+        return {"error": "no usable transactions found. Expected columns like "
+                         "date, description, amount (category, counterparty, ref optional). "
+                         f"Found: {', '.join(list(records[0])[:8])}"}
+    n = len(store.transactions())
+    rng = store.date_range()
+    span = f" covering {rng[0]} to {rng[1]}" if rng else ""
+    note = f" ({skipped} row(s) skipped — unreadable date or amount)" if skipped else ""
+    return {"txn_count": n, "has_data": True, "imported": added,
+            "message": f"Loaded {added} transactions from {filename}{span}.{note}"}
+
+
 def do_load_sample(p: dict) -> dict:
     """Explicitly load the generated sample business — for anyone who wants a quick look
     without typing data. Never loaded implicitly."""
@@ -291,7 +381,7 @@ def do_import(p: dict) -> dict:
 
 
 ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
-          "/api/load_sample": do_load_sample,
+          "/api/load_sample": do_load_sample, "/api/upload": do_upload,
           "/api/business": do_business, "/api/import": do_import}
 
 

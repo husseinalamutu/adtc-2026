@@ -65,14 +65,23 @@
     </p>
 
     <div id="bz-import">
-      <label>Your transactions (CSV: date, description, amount, category, counterparty, ref)</label>
+      <label>Upload your books — Excel (.xlsx) or CSV</label>
+      <input type="file" id="bz-file" accept=".xlsx,.csv,.tsv,.txt"
+             style="padding:14px;border:2px dashed var(--line);border-radius:10px;background:#fbfcfd;cursor:pointer"
+             onchange="uploadFile()">
+      <p class="muted" style="margin:6px 0 0">Straight from your spreadsheet or bank export —
+      column names like <em>Date / Narration / Amount</em> are recognised automatically.
+      Nothing leaves this laptop.</p>
+
+      <details style="margin-top:14px">
+        <summary class="muted">…or paste the rows instead</summary>
       <textarea id="bz-csv" style="min-height:120px" placeholder="date,description,amount,category,counterparty,ref
 2026-06-02,Counter sale,125000,Sales,Walk-in customer,TX9001
 2026-06-03,Cement delivery,-420000,Inventory purchase,Dangote Cement Depot,TX9002
 2026-06-05,Fuel for delivery van,-18000,Transport,,TX9003"></textarea>
-      <p class="muted" style="margin:6px 0 0">Negative amounts are money out; positive is money in.
-      Export this from your spreadsheet or bookkeeping app.</p>
-      <button class="go" onclick="importCsv()">Load my transactions</button>
+      <p class="muted" style="margin:6px 0 0">Negative amounts are money out; positive is money in.</p>
+      <button class="go" onclick="importCsv()">Load pasted rows</button>
+      </details>
       <button class="go" style="background:#6b7c8d" onclick="loadSample()">Use a sample business instead</button>
     </div>
 
@@ -220,6 +229,22 @@ function showLoaded(n) {
     : "<strong>Your data stays on this laptop.</strong> Paste your transactions below — nothing is "
       + "uploaded, and no internet connection is used. The engine computes every figure from your "
       + "books; the copilot puts it in plain language.";
+}
+
+async function uploadFile() {
+  const f = $("#bz-file").files[0];
+  if (!f) return;
+  const b64 = await new Promise(res => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(",")[1]);   // strip the data: prefix
+    r.readAsDataURL(f);
+  });
+  const resp = await fetch("/api/upload", { method:"POST", headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({ filename: f.name, content_b64: b64 }) });
+  const d = await resp.json();
+  if (d.error) { alert(d.error); $("#bz-file").value = ""; return; }
+  showLoaded(d.txn_count || 0);
+  if (d.message) $("#bz-count").textContent = d.message;
 }
 
 async function loadSample() {
