@@ -13,6 +13,20 @@ fọdụrụ`). The AI draft had conflated net profit with remaining balance in 
 *(Yoruba is drafted in the code but NOT claimed for this submission — the
 African-language claim covers Hausa and Igbo only.)*
 
+## NEXT ROUND — strings still needed
+The app currently falls back to English for two screens because no reviewed vocabulary
+exists for them. Rather than machine-translate, those screens stay English until a native
+speaker supplies these. Please add when convenient:
+
+| Key | English |
+|---|---|
+| stock_on_hand | Stock on hand: {currency} {amount} across {n} product(s) |
+| cogs | Cost of goods sold: {currency} {amount} |
+| dead_stock | Capital tied up in stock unsold for 90+ days: {currency} {amount} |
+| vat_added | Prices exclude VAT — VAT added: {currency} {amount} |
+| vat_included | Prices already include VAT — VAT within the price: {currency} {amount} |
+| total_payable | Total payable: {currency} {amount} |
+
 **For the native reviewer.** These strings are what an SME operator reads in the app.
 They were drafted by an English-language AI and are **unverified** — assume every line
 is wrong until you've checked it. Financial and tax vocabulary is where machine drafts

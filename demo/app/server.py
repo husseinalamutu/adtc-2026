@@ -298,6 +298,37 @@ def do_upload(p: dict) -> dict:
             "message": f"Loaded {added} transactions from {filename}{span}.{note}"}
 
 
+def _localise_anomalies(items, lang: str) -> str | None:
+    """Only reviewed vocabulary is used. Anomaly kinds without a reviewed string are
+    omitted rather than machine-translated — a half-invented Hausa sentence in front of a
+    judge is worse than showing the English block."""
+    if not items:
+        return i18n.t("no_issues", lang)
+    lines = [i18n.t("duplicate_payment", lang, currency="NGN",
+                    amount=i18n.money(a.amount), name=a.counterparty or "?")
+             for a in items if a.kind == "duplicate_payment"]
+    return "\n".join(lines) or None
+
+
+def _localise_forecast(f, lang: str) -> str | None:
+    if f.insufficient_history:
+        return None
+    if f.shortfall > 0:
+        return i18n.t("shortfall", lang, currency="NGN", amount=i18n.money(f.shortfall))
+    return i18n.t("covered", lang)
+
+
+def _localise_plan(plan, lang: str) -> str | None:
+    lines = []
+    for r in plan.recommendations:
+        if r.action.startswith("Chase "):
+            name = r.action.replace("Chase ", "").replace(" for payment", "")
+            days = "".join(ch for ch in r.evidence if ch.isdigit()) or "0"
+            lines.append(i18n.t("chase_customer", lang, name=name, currency="NGN",
+                                amount=i18n.money(r.impact), days=days))
+    return "\n".join(lines) or None
+
+
 def _business_store() -> Store:
     """The operator's books — EMPTY until they import their own data.
 
@@ -344,33 +375,34 @@ def do_business(p: dict) -> dict:
     obligations = _dec(p["obligations"]) if p.get("obligations") else None
     store = _business_store()
     lang = p.get("lang", "en")
-
+    localised = None
     if kind == "health":
         h = business_health(store, as_of)
         verified = h.as_ground_truth("NGN")
-        localised = i18n.render_health(h, lang) if lang != "en" else None
+        if lang != "en":
+            localised = i18n.render_health(h, lang)
     elif kind == "anomalies":
         items = detect(store)
         verified = anomalies_text(items)
-        localised = None
-        if lang != "en" and items:
-            top = items[0]
-            localised = i18n.t("duplicate_payment", lang, currency="NGN",
-                               amount=i18n.money(top.amount), name=top.counterparty or "?") \
-                if top.kind == "duplicate_payment" else None
+        if lang != "en":
+            localised = _localise_anomalies(items, lang)
     elif kind == "forecast":
-        verified, localised = project(store, as_of, committed_obligations=obligations
-                                      ).as_ground_truth("NGN"), None
+        f = project(store, as_of, committed_obligations=obligations)
+        verified = f.as_ground_truth("NGN")
+        if lang != "en":
+            localised = _localise_forecast(f, lang)
     elif kind == "stock":
         inv = position(store, as_of, as_of.replace(day=1))
         ccc = cash_conversion_cycle(store, as_of)
         extra = ("" if ccc["cash_conversion_days"] is None else
                  f"\nCash conversion cycle: {ccc['cash_conversion_days']:.0f} days "
                  f"({ccc['note']})")
-        verified, localised = inv.as_ground_truth("NGN") + extra, None
+        verified = inv.as_ground_truth("NGN") + extra
     else:
-        verified, localised = recommend(store, as_of, committed_obligations=obligations
-                                        ).as_ground_truth("NGN"), None
+        plan = recommend(store, as_of, committed_obligations=obligations)
+        verified = plan.as_ground_truth("NGN")
+        if lang != "en":
+            localised = _localise_plan(plan, lang)
 
     return {"verified": verified, "localised": localised, "lang": lang,
             "languages": [{"code": c, "name": i18n.language_name(c)} for c in i18n.available()],

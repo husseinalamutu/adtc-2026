@@ -279,14 +279,17 @@ async function importCsv() {
 function payload(task) {
   if (task === "reconcile") {
     const lump = $("#rc-lump").checked;
-    return { statement: $("#rc-stmt").value, invoices_text: $("#rc-invs").value,
+    return { lang: $("#bz-lang").value,
+             statement: $("#rc-stmt").value, invoices_text: $("#rc-invs").value,
              mode: lump ? "lump" : "exact", lump_amount: lump ? $("#rc-amt").value || "0" : null };
   }
   if (task === "tax")
-    return { question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
+    return { lang: $("#bz-lang").value,
+             question: $("#tx-q").value, turnover: $("#tx-turn").value || null,
              fixed_assets: $("#tx-ass").value || null, professional_services: $("#tx-prof").checked };
   if (task === "quote")
-    return { items_text: $("#qt-items").value, vat_inclusive: $("#qt-inc").checked };
+    return { items_text: $("#qt-items").value, vat_inclusive: $("#qt-inc").checked,
+             lang: $("#bz-lang").value };
   return {};
 }
 
@@ -302,6 +305,9 @@ async function run(task) {
                                                             : (d.verified || "(no structured figures for this question — model answer below)");
     const cites = tab.querySelector(".cites");
     if (cites) cites.textContent = (d.cites && d.cites.length) ? "Source: " + d.cites.join(" · ") : "";
+    const narrHead = tab.querySelector(".narr h4");
+    if (narrHead) narrHead.textContent =
+      (d.lang && d.lang !== "en") ? "Copilot explains (English)" : "Copilot explains";
     tab.querySelector(".narr .n").textContent =
       d.narrative || "(model offline — start llama-server to add the plain-language explanation; the verified figures above are complete and correct without it)";
   } finally {
