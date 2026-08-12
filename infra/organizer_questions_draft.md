@@ -40,6 +40,13 @@ acceptable for submission, or whether entrants should use a permissively license
 (Apache/MIT) or one that permits commercial use (e.g. Llama)? We have a migration prepared
 either way and would rather know now than after judging.
 
+**5. How should Sperf be self-reported on the Devpost form?**
+The submission form asks for a "Self Reported Profiler Performance Score (Sperf)", but
+`S_perf = 100 × (TPS_act ÷ TPS_max)` depends on the fastest submission across all teams, which
+entrants cannot know — and the profiler outputs raw `tokens_per_second_generation`, not a
+score. Should we enter our measured TPS (ours is 2.75 tok/s on audit-class hardware), or is
+the field expecting something else?
+
 Thanks for the great challenge — the offline-first constraint is exactly right for our market.
 
 (name / team id)
