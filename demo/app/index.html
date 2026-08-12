@@ -47,6 +47,15 @@
   <span class="badge">100% offline</span>
   <span class="badge">figures computed, never guessed</span>
   <span class="badge">verified against the Nigeria Tax Acts 2025</span>
+  <span style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <label for="bz-lang" style="color:#fff;font-size:.82rem;margin:0">Language</label>
+    <select id="bz-lang" style="padding:6px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.45);
+            background:rgba(255,255,255,.12);color:#fff;font:inherit;font-size:.85rem">
+      <option value="en" style="color:#1a2330">English</option>
+      <option value="ha" style="color:#1a2330">Hausa</option>
+      <option value="ig" style="color:#1a2330">Igbo</option>
+    </select>
+  </span>
 </header>
 <main>
   <nav>
@@ -95,15 +104,9 @@
         <button onclick="biz('stock')">Cash tied up in stock?</button>
         <button onclick="biz('actions')">What should I do?</button>
       </div>
-      <div class="row" style="margin-top:12px">
-        <div><label>Known supplier obligations next month (₦, optional)</label>
-          <input id="bz-obl" placeholder="4200000"></div>
-        <div><label>Language</label>
-          <select id="bz-lang" style="width:100%;padding:9px;border:1px solid var(--line);border-radius:8px;font:inherit">
-            <option value="en">English</option>
-            <option value="ha">Hausa</option>
-            <option value="ig">Igbo</option>
-          </select></div>
+      <div style="margin-top:12px">
+        <label>Known supplier obligations next month (₦, optional)</label>
+        <input id="bz-obl" placeholder="4200000" style="max-width:320px">
       </div>
     </div>
     <span class="spin">computing…</span>

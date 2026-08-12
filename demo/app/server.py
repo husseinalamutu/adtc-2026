@@ -298,6 +298,19 @@ def do_upload(p: dict) -> dict:
             "message": f"Loaded {added} transactions from {filename}{span}.{note}"}
 
 
+def _business_store() -> Store:
+    """The operator's books — EMPTY until they import their own data.
+
+    Deliberately not pre-loaded with the sample business: an app that says "your books"
+    while showing generated demo figures is lying to the user, and a walkthrough is far more
+    convincing when the presenter uploads real data and the numbers appear. The sample
+    business is still available, but only on explicit request (`/api/load_sample`)."""
+    global _STORE
+    if _STORE is None:
+        _STORE = Store(":memory:")
+    return _STORE
+
+
 def do_load_sample(p: dict) -> dict:
     """Explicitly load the generated sample business — for anyone who wants a quick look
     without typing data. Never loaded implicitly."""
