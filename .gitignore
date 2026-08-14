@@ -35,3 +35,8 @@ demo/app/app_server.log
 submission/QA_PREP.md
 submission/DEVPOST_DRAFT.md
 submission/DEVPOST_ABOUT.md
+
+# Transfer progress logs — megabytes of progress-bar spam, no diagnostic value
+hf_upload.log
+# Scratch image exports from drafting
+submission/image/
