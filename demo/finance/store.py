@@ -239,5 +239,14 @@ class Store:
         r = self.conn.execute("SELECT MIN(txn_date) a, MAX(txn_date) b FROM transactions").fetchone()
         return (_as_date(r["a"]), _as_date(r["b"])) if r["a"] else None
 
+    def available_months(self) -> list[str]:
+        """Distinct 'YYYY-MM' months actually present in the transactions, oldest first.
+        Drives the "as of" picker -- businesses upload data covering whatever period
+        they have, not necessarily anything near the current calendar month."""
+        rows = self.conn.execute(
+            "SELECT DISTINCT substr(txn_date, 1, 7) AS ym FROM transactions ORDER BY ym"
+        ).fetchall()
+        return [r["ym"] for r in rows]
+
     def close(self):
         self.conn.close()

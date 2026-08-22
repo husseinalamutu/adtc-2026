@@ -294,7 +294,7 @@ def do_upload(p: dict) -> dict:
     rng = store.date_range()
     span = f" covering {rng[0]} to {rng[1]}" if rng else ""
     note = f" ({skipped} row(s) skipped — unreadable date or amount)" if skipped else ""
-    return {"txn_count": n, "has_data": True, "imported": added,
+    return {"txn_count": n, "has_data": True, "imported": added, "months": store.available_months(),
             "message": f"Loaded {added} transactions from {filename}{span}.{note}"}
 
 
@@ -348,7 +348,7 @@ def do_load_sample(p: dict) -> dict:
     store = _business_store()
     sample_data.load_into(store)
     n = len(store.transactions())
-    return {"txn_count": n, "has_data": n > 0,
+    return {"txn_count": n, "has_data": n > 0, "months": store.available_months(),
             "message": f"Sample business loaded — {n} transactions (a Lagos "
                        f"building-materials retailer, 6 months of trading)."}
 
@@ -434,7 +434,7 @@ def do_import(p: dict) -> dict:
     rng = _STORE.date_range()
     return {"verified": f"Imported {n} transactions"
                         + (f" covering {rng[0]} to {rng[1]}." if rng else "."),
-            "narrative": None, "txn_count": n}
+            "narrative": None, "txn_count": n, "months": _STORE.available_months()}
 
 
 ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,

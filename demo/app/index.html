@@ -37,7 +37,8 @@
   .chips button { font-size:.82rem; border:1px solid var(--line); background:#fbfcfd; border-radius:999px;
                   padding:4px 12px; cursor:pointer; }
   .muted { color:var(--mut); font-size:.85rem; }
-  .spin { display:none; margin-left:10px; color:var(--mut); }
+  .spin { display:none; margin-left:10px; color:var(--brand); font-weight:600; animation:pulse 1.1s ease-in-out infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
   footer { text-align:center; color:var(--mut); font-size:.8rem; padding:24px; }
 </style>
 </head>
@@ -97,6 +98,9 @@
     <div id="bz-loaded" style="display:none">
       <p class="muted"><strong id="bz-count"></strong>
         <a href="#" onclick="resetData();return false" style="margin-left:10px">use different data</a></p>
+      <p class="muted">Looking at:
+        <select id="bz-asof" onchange="if(lastScenario) biz(lastScenario)" style="display:inline-block;width:auto;padding:4px 8px"></select>
+        — pick any month your upload covers; "Anything unusual?" always checks everything regardless.</p>
       <div class="chips">
         <button onclick="biz('health')">What happened this month?</button>
         <button onclick="biz('anomalies')">Anything unusual?</button>
@@ -105,8 +109,11 @@
         <button onclick="biz('actions')">What should I do?</button>
       </div>
       <div style="margin-top:12px">
-        <label>Known supplier obligations next month (₦, optional)</label>
+        <label>Bills you already know are due next month (₦, optional)</label>
         <input id="bz-obl" placeholder="4200000" style="max-width:320px">
+        <p class="muted" style="margin-top:4px">Only used by "Enough cash next month?" and "What should I do?" —
+          for a bill you've committed to that hasn't shown up in your transactions yet (so the forecast
+          doesn't miss it just because it hasn't happened).</p>
       </div>
     </div>
     <span class="spin">computing…</span>
@@ -215,9 +222,10 @@ async function biz(kind) {
   const tab = $("#tab-business");
   tab.querySelector(".spin").style.display = "inline";
   try {
+    const asOf = selectedAsOf();
     const r = await fetch("/api/business", { method:"POST", headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({ kind, obligations: $("#bz-obl").value || null,
-                             lang: $("#bz-lang").value }) });
+                             lang: $("#bz-lang").value, as_of: asOf }) });
     const d = await r.json();
     tab.querySelector(".result").style.display = "block";
     const langName = { en: "English", ha: "Hausa", ig: "Igbo" }[d.lang || "en"];
@@ -237,7 +245,34 @@ async function biz(kind) {
 
 function qtExample() { $("#qt-items").value = "Bags of cement, 10, 8500"; }
 
-function showLoaded(n) {
+const MONTH_NAMES = ["January","February","March","April","May","June",
+                      "July","August","September","October","November","December"];
+
+// "2026-06" -> its last calendar day, "2026-06-30" -- the backend reads transactions
+// up to and including as_of, so the FIRST of the month would cut off almost everything.
+function lastDayOfMonth(ym) {
+  const [y, m] = ym.split("-").map(Number);
+  return `${y}-${String(m).padStart(2,"0")}-${String(new Date(y, m, 0).getDate()).padStart(2,"0")}`;
+}
+
+function selectedAsOf() {
+  const sel = $("#bz-asof");
+  return (sel && sel.value) ? lastDayOfMonth(sel.value) : null;
+}
+
+// Populates the "Looking at" picker from whatever months the loaded data actually spans
+// (not the current calendar month -- an upload might be historical, or simply not recent).
+function populateMonths(months) {
+  const sel = $("#bz-asof");
+  if (!sel || !months || !months.length) return;
+  sel.innerHTML = months.map(ym => {
+    const [y, m] = ym.split("-").map(Number);
+    return `<option value="${ym}">${MONTH_NAMES[m - 1]} ${y}</option>`;
+  }).join("");
+  sel.value = months[months.length - 1];   // default: most recent month in the data
+}
+
+function showLoaded(n, months) {
   $("#bz-import").style.display = n > 0 ? "none" : "block";
   $("#bz-loaded").style.display = n > 0 ? "block" : "none";
   $("#bz-count").textContent = n > 0 ? n + " transactions loaded from your data." : "";
@@ -247,6 +282,7 @@ function showLoaded(n) {
     : "<strong>Your data stays on this laptop.</strong> Paste your transactions below — nothing is "
       + "uploaded, and no internet connection is used. The engine computes every figure from your "
       + "books; the copilot puts it in plain language.";
+  if (months) populateMonths(months);
 }
 
 async function uploadFile() {
@@ -261,14 +297,14 @@ async function uploadFile() {
     body: JSON.stringify({ filename: f.name, content_b64: b64 }) });
   const d = await resp.json();
   if (d.error) { alert(d.error); $("#bz-file").value = ""; return; }
-  showLoaded(d.txn_count || 0);
+  showLoaded(d.txn_count || 0, d.months);
   if (d.message) $("#bz-count").textContent = d.message;
 }
 
 async function loadSample() {
   const r = await fetch("/api/load_sample", { method:"POST", headers:{ "Content-Type":"application/json" }, body:"{}" });
   const d = await r.json();
-  showLoaded(d.txn_count || 0);
+  showLoaded(d.txn_count || 0, d.months);
 }
 
 function resetData() { location.reload(); }
@@ -283,7 +319,7 @@ async function importCsv() {
     tab.querySelector(".result").style.display = "block";
     tab.querySelector(".verified .v").textContent = d.error ? ("Import failed: " + d.error) : d.verified;
     tab.querySelector(".narr .n").textContent = d.error ? "" : "Your data is loaded — ask a question above.";
-    if (d.txn_count) showLoaded(d.txn_count);
+    if (!d.error && d.txn_count) showLoaded(d.txn_count, d.months);
   } finally { tab.querySelector(".spin").style.display = "none"; }
 }
 
