@@ -307,7 +307,13 @@ async function loadSample() {
   showLoaded(d.txn_count || 0, d.months);
 }
 
-function resetData() { location.reload(); }
+async function resetData() {
+  // Reloading the page alone only resets the UI -- _STORE is a server-side singleton that
+  // otherwise keeps every previously-loaded row, so a same-named re-upload (or a re-take
+  // during a demo) silently imports zero new rows on the next attempt.
+  await fetch("/api/reset", { method:"POST", headers:{ "Content-Type":"application/json" }, body:"{}" });
+  location.reload();
+}
 
 async function importCsv() {
   const tab = $("#tab-business");

@@ -342,6 +342,17 @@ def _business_store() -> Store:
     return _STORE
 
 
+def do_reset(p: dict) -> dict:
+    """Actually clear the operator's books, server-side. "use different data" used to just
+    reload the page -- the UI looked reset but _STORE (a process-lifetime singleton) still
+    held every previously-loaded row, so re-uploading the same file (or one sharing any
+    ref+date+amount+direction with what was already there) silently imported zero new rows
+    and returned "no usable transactions found", with no indication why."""
+    global _STORE
+    _STORE = Store(":memory:")
+    return {"has_data": False}
+
+
 def do_load_sample(p: dict) -> dict:
     """Explicitly load the generated sample business — for anyone who wants a quick look
     without typing data. Never loaded implicitly."""
@@ -439,7 +450,7 @@ def do_import(p: dict) -> dict:
 
 ROUTES = {"/api/reconcile": do_reconcile, "/api/tax": do_tax, "/api/quote": do_quote,
           "/api/load_sample": do_load_sample, "/api/upload": do_upload,
-          "/api/business": do_business, "/api/import": do_import}
+          "/api/business": do_business, "/api/import": do_import, "/api/reset": do_reset}
 
 
 class Handler(SimpleHTTPRequestHandler):
