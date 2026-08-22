@@ -371,7 +371,11 @@ def do_business(p: dict) -> dict:
                 "error": "No transactions loaded yet. Paste your CSV above (or load the "
                          "sample business) and the engine will compute from your own books."}
     kind = p.get("kind", "health")
-    as_of = date.fromisoformat(p.get("as_of") or "2026-06-15")
+    # "Now" for a books-analysis tool is the most recent thing in the books, not the wall
+    # clock -- the UI never sends as_of, and a fixed calendar date would go stale the moment
+    # anyone loads data that doesn't straddle it (the sample business is permanently
+    # Jan-Jun 2026; a real upload could be any period at all).
+    as_of = date.fromisoformat(p["as_of"]) if p.get("as_of") else store_check.date_range()[1]
     obligations = _dec(p["obligations"]) if p.get("obligations") else None
     store = _business_store()
     lang = p.get("lang", "en")
