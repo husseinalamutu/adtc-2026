@@ -100,7 +100,9 @@
         <a href="#" onclick="resetData();return false" style="margin-left:10px">use different data</a></p>
       <p class="muted">Looking at:
         <select id="bz-asof" onchange="if(lastScenario) biz(lastScenario)" style="display:inline-block;width:auto;padding:4px 8px"></select>
-        — pick any month your upload covers; "Anything unusual?" always checks everything regardless.</p>
+        — affects "What happened this month?" and "Cash tied up in stock?" only.
+        "Anything unusual?" always checks everything; "Enough cash next month?" and
+        "What should I do?" always answer from your latest data, regardless of this.</p>
       <div class="chips">
         <button onclick="biz('health')">What happened this month?</button>
         <button onclick="biz('anomalies')">Anything unusual?</button>

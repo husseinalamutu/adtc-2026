@@ -397,10 +397,16 @@ def do_business(p: dict) -> dict:
                          "sample business) and the engine will compute from your own books."}
     kind = p.get("kind", "health")
     # "Now" for a books-analysis tool is the most recent thing in the books, not the wall
-    # clock -- the UI never sends as_of, and a fixed calendar date would go stale the moment
-    # anyone loads data that doesn't straddle it (the sample business is permanently
-    # Jan-Jun 2026; a real upload could be any period at all).
-    as_of = date.fromisoformat(p["as_of"]) if p.get("as_of") else store_check.date_range()[1]
+    # clock -- the UI never sends as_of by default, and a fixed calendar date would go stale
+    # the moment anyone loads data that doesn't straddle it.
+    latest = store_check.date_range()[1]
+    # Health and stock show a specific point in time, so the "Looking at" picker applies --
+    # reviewing March should show March. Forecast and actions answer "what's my outlook
+    # right now", which must mean the books' true latest position: if it followed the picker,
+    # leaving it on an earlier month while reviewing "What happened this month?" would silently
+    # make "Enough cash next month?" answer for the wrong month, with only the Horizon date in
+    # the result to notice it happened.
+    as_of = date.fromisoformat(p["as_of"]) if p.get("as_of") else latest
     obligations = _dec(p["obligations"]) if p.get("obligations") else None
     store = _business_store()
     lang = p.get("lang", "en")
@@ -416,7 +422,7 @@ def do_business(p: dict) -> dict:
         if lang != "en":
             localised = _localise_anomalies(items, lang)
     elif kind == "forecast":
-        f = project(store, as_of, committed_obligations=obligations)
+        f = project(store, latest, committed_obligations=obligations)
         verified = f.as_ground_truth("NGN")
         if lang != "en":
             localised = _localise_forecast(f, lang)
@@ -428,7 +434,7 @@ def do_business(p: dict) -> dict:
                  f"({ccc['note']})")
         verified = inv.as_ground_truth("NGN") + extra
     else:
-        plan = recommend(store, as_of, committed_obligations=obligations)
+        plan = recommend(store, latest, committed_obligations=obligations)
         verified = plan.as_ground_truth("NGN")
         if lang != "en":
             localised = _localise_plan(plan, lang)
