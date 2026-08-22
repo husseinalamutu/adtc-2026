@@ -228,10 +228,15 @@ def _pick(record: dict, field: str) -> str:
     return ""
 
 
-def _ingest_records(store, records: list[dict]) -> tuple[int, int]:
+def _ingest_records(store, records: list[dict]) -> tuple[int, int, int]:
     """Turn parsed rows into transactions. Rows whose date or amount can't be read are
     SKIPPED and counted, never guessed — a fabricated figure in someone's books is worse
-    than a smaller import."""
+    than a smaller import.
+
+    Returns (added, skipped, parsed). `parsed` is how many rows had a readable date and
+    amount, regardless of whether the store actually inserted them — added < parsed means
+    some parsed rows were already present (same ref+date+amount+direction), which the caller
+    needs to tell apart from "nothing here was even readable"."""
     rows, skipped = [], 0
     for rec in records:
         raw_date, raw_amount = _pick(rec, "date"), _pick(rec, "amount")
@@ -253,7 +258,7 @@ def _ingest_records(store, records: list[dict]) -> tuple[int, int]:
                         _pick(rec, "description") or "(no description)", amount,
                         direction, _pick(rec, "category") or None,
                         _pick(rec, "counterparty") or None))
-    return (store.add_transactions(rows) if rows else 0), skipped
+    return (store.add_transactions(rows) if rows else 0), skipped, len(rows)
 
 
 def _parse_date(text: str) -> date:
@@ -285,8 +290,17 @@ def do_upload(p: dict) -> dict:
     if not records:
         return {"error": f"no rows found in {filename!r} — is the first row a header?"}
     store = _business_store()
-    added, skipped = _ingest_records(store, records)
+    added, skipped, parsed = _ingest_records(store, records)
     if not added:
+        if parsed:
+            # Every readable row already matches one already loaded (ref+date+amount+
+            # direction) -- the data IS there, this isn't a failure. Re-dropping the same
+            # file twice, or re-uploading after a partial demo retake, hits this exact path.
+            n = len(store.transactions())
+            return {"txn_count": n, "has_data": n > 0, "imported": 0, "months": store.available_months(),
+                    "message": f"{filename} is already loaded ({n} transaction(s) total) — "
+                               f"nothing new in this file. Use \"use different data\" first "
+                               f"if you meant to start over."}
         return {"error": "no usable transactions found. Expected columns like "
                          "date, description, amount (category, counterparty, ref optional). "
                          f"Found: {', '.join(list(records[0])[:8])}"}
