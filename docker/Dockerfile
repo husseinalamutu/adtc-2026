@@ -49,8 +49,12 @@ RUN git clone --depth 1 --branch "${LLAMACPP_REF}" \
 # -----------------------------------------------------------------------------
 FROM python:3.11-slim AS runtime
 
+# build-essential + cmake: adtc-profiler pulls in llama-cpp-python, which compiles a native
+# extension via scikit-build-core/CMake at install time. This worked without a compiler here
+# when the Dockerfile was last verified (2026-07-07) because a prebuilt wheel matched this
+# platform then; it no longer does, so the runtime stage needs to build it like llama-build does.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      git curl ca-certificates lm-sensors libgomp1 \
+      git curl ca-certificates lm-sensors libgomp1 build-essential cmake \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=llama-build /src/llama.cpp/build/bin/llama-bench  /usr/local/bin/

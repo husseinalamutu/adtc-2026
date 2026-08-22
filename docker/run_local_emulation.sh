@@ -11,6 +11,12 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."   # repo root
 
+# On Git Bash for Windows, MSYS rewrites any argument that looks like an absolute Unix path
+# (e.g. the container-side "/submission" in --submission /submission below) into a Windows
+# path *before* docker ever sees it, turning it into nonsense like "C:/Program Files/Git/
+# submission" -- which then fails validation inside the container. No-op on macOS/Linux.
+export MSYS_NO_PATHCONV=1
+
 PLATFORM_FLAG=()
 TAG="adtc-emu:arm64"
 if [[ "${1:-}" == "--x86" ]]; then
@@ -50,6 +56,10 @@ if [ -f artifacts/local_report.json ]; then
   HOST_ARCH="$(uname -m)"
   python3 - "$HOST_ARCH" <<'PY'
 import json, sys
+# Windows' default console codepage (cp1252) can't encode the checkmark/warning emoji
+# below and would crash on print() after the (successful) benchmark already ran --
+# force UTF-8 regardless of platform locale.
+sys.stdout.reconfigure(encoding="utf-8")
 arch = sys.argv[1]
 r = json.load(open('artifacts/local_report.json'))
 tps = r['throughput']['tokens_per_second_generation']
