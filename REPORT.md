@@ -44,38 +44,31 @@ measured most thoroughly (34/37 facts); the migration is planned work, not a hyp
 
 ## 2. Design decisions (and the alternatives we rejected)
 
-**Base model — Qwen2.5-3B-Instruct (4-bit).** Speed is scored *relative to the fastest submission*
-(`S_perf = 100·TPS_act/TPS_max`), and the audit runs a deliberately SIMD-disabled (scalar) llama.cpp
-build that slows every submission alike — measured at **2.4 tok/s** (avg of 2 clean runs, 2.31-2.42)
-for our 3B on an audit-class i7-1185G7 (4 CPUs / 7.5 GB, audit-exact flags). We made the size
-decision **empirically**: we
-trained a 1.5B on identical data and it *matched the 3B on domain-fact recall (35/37 vs 34/37)*
-but **failed multi-invoice reconciliation arithmetic — including the class of our own declared
-test prompt p1** — for only ~2× speed. Since accuracy is 50% of the score (and judged partly
-qualitatively), we kept the 3B and accept the relative speed cost. We likewise rejected 7–8B
-(~2× slower still, and it risks the 7 GB OOM line). Qwen2.5-3B specifically: strong multilingual/general reasoning and a large
-GGUF/quant ecosystem. (Its licence is *not* permissive — see §1b.) We fine-tune from the **pre-quantized 4-bit build**
-(`mlx-community/Qwen2.5-3B-Instruct-4bit`) — this is true QLoRA and is what makes a full-quality
-fine-tune fit in 8 GB (see §4).
+**Base model — Qwen2.5-3B-Instruct (4-bit).** Speed is scored *relative to the fastest
+submission* (`S_perf = 100·TPS_act/TPS_max`) and the audit runs a deliberately SIMD-disabled
+build that slows every entry alike, so we chose size **empirically** rather than chasing tok/s:
+a 1.5B trained on identical data matched the 3B on fact recall (35/37 vs 34/37) but **failed
+multi-invoice reconciliation arithmetic — including the class of our own test prompt p1** — for
+~2× speed. Accuracy is 50% of the score, so we kept the 3B. We rejected 7–8B (~2× slower again,
+and it risks the 7 GB OOM line). Qwen2.5-3B for its reasoning quality and mature GGUF ecosystem;
+its licence is *not* permissive (see §1b). We fine-tune the **pre-quantized 4-bit build**
+(`mlx-community/Qwen2.5-3B-Instruct-4bit`) — true QLoRA, and what makes a full-quality fine-tune
+fit in 8 GB (§4).
 
-**Fine-tune, don't rely on RAG for the score.** The sandbox scores the **bare model** on our 2 test
-prompts + 3 hidden in-domain prompts — no retrieval pipeline runs. So domain accuracy has to live
-**in the weights**. We fine-tuned rather than leaning on a retrieval trick the audit can't execute.
-(A document-upload RAG feature *does* exist — but purely in the human-facing demo, for grounding
-other countries' tax law; it is never the thing standing between the bare model and a correct
-answer. See §5.)
+**Fine-tune, don't rely on RAG.** The sandbox scores the **bare model** on 2 declared + 3 hidden
+prompts; no retrieval pipeline runs. Domain accuracy therefore has to live in the weights. A
+document-upload RAG feature exists in the demo for other countries' tax law, but it never stands
+between the bare model and a correct answer.
 
-**Quantization — Q4_K_M with an importance matrix (imatrix).** Q4_K_M is the community sweet spot
-(~90–95% of fp quality at ¼ the memory). We compute a **domain-representative imatrix** from our own
-training corpus, which recovers most of the accuracy 4-bit would otherwise cost — near-free accuracy
-points. We rejected plain Q4 (leaves accuracy on the table) and Q5+/Q8 (pushes RSS up for gains we
-don't need given the strong efficiency margin).
+**Quantization — Q4_K_M with an importance matrix.** ~90–95% of full-precision quality at a
+quarter of the memory, and the imatrix — computed from our own domain corpus — recovers most of
+what 4-bit would otherwise cost. Plain Q4 leaves accuracy on the table; Q5+/Q8 raise RSS for
+gains our efficiency margin doesn't need.
 
 **Cross-disciplinary pairing (load-bearing): LLM + offline financial intelligence engine.**
 The model supplies natural-language reach; a **deterministic engine** (`demo/finance/`, stdlib
-only, 71 unit tests) supplies every figure. The split is not cosmetic — we *measured* where a
-3B model fails at money arithmetic and built the engine precisely there. Six layers, each
-computing rather than generating:
+only, 131 tests) supplies every figure. We *measured* where a 3B fails at money arithmetic and
+built the engine precisely there. Six layers, each computing rather than generating:
 
 | Layer | Discipline | What it computes |
 |---|---|---|
@@ -86,22 +79,19 @@ computing rather than generating:
 | `anomalies` | applied statistics | robust z-score (median/MAD) per category, duplicate payments, per-line-item price jumps — 371 transactions → a 6-row shortlist |
 | `advisor` | operations research | ranks quantified interventions by recoverable value and states honestly whether they close the projected gap |
 
-`tax_rules` computes citeable Nigeria-2025 verdicts from the **same** grep-verified fact base the
-training data was generated from — one source of truth for weights, engine and demo, so they
-cannot disagree about what the law says. The model narrates; it never recomputes. Neither half
-works alone: without the model the engine is a spreadsheet, without the engine the model is a
-confident guess about someone's money.
+`tax_rules` derives citeable Nigeria-2025 verdicts from the **same** grep-verified fact base
+that generated the training data — one source of truth for weights, engine and demo, so they
+cannot disagree about the law. The model narrates; it never recomputes. Without the model the
+engine is a spreadsheet; without the engine the model is a confident guess about someone's money.
 
-**Multilingual output without model-capacity cost.** **Hausa and Igbo** are rendered from computed
-figures by **native-reviewed** templates (`i18n.py`), not generated by the model — reviewers changed
-11 of 14 and 10 of 14 strings respectively, and both independently corrected the same error (the AI
-draft had conflated *net profit* with *remaining balance* in both languages). Figures are
-byte-identical across languages by construction, hallucination is structurally impossible in the
-language layer, and the model's limited capacity stays spent on English financial reasoning — which
-is what the audit measures. A Yoruba catalogue exists but is unreviewed, so it is **gated in code and
-not claimed**. These languages live in the application layer; `metadata.json` accordingly declares
-`language_scope: ["en"]`, because the GGUF itself is English-only and we will not invite hidden
-prompts in a language it cannot serve.
+**Multilingual output without model-capacity cost.** **Hausa and Igbo** are rendered from
+computed figures by **native-reviewed** templates, not generated — reviewers changed 11 of 14 and
+10 of 14 strings, and both independently corrected the same error (our draft conflated *net
+profit* with *remaining balance* in each language). Figures are byte-identical across languages
+by construction, so a wrong number is structurally impossible, and the model's capacity stays
+spent on English financial reasoning — which is what the audit measures. Yoruba is drafted but
+unreviewed, so it is gated in code and **not claimed**. These languages live in the application
+layer; `metadata.json` declares `language_scope: ["en"]` because the GGUF itself is English-only.
 
 ## 3. How we kept the model honest (accuracy engineering)
 
@@ -117,25 +107,24 @@ Accuracy is 50% of the score and is won on the *bare* model, so the **training d
 | Intelligence drills (applied tax conclusions; narration of computed figures) | 500 | **Deterministic — the finance engine is the oracle.** Tax drills teach the model to *apply* a threshold rather than recite it; narration drills teach faithful restatement of engine output. |
 | Advisory (Kenya/Ghana/Uganda/Tanzania VAT/WHT reasoning) | 248 | LLM teacher, **grounded** in fixed per-market rates — the model only phrases supplied facts. |
 
-**We measure what we ship, and we gate on it.** Two harnesses run against the quantized GGUF at
-greedy decoding: `fact_eval.py` (37 adversarially-phrased Nigeria questions, including casual and
-Pidgin framings) and `arith_eval.py` (12 arithmetic cases). Building the arithmetic gate
-immediately exposed three defects that hand-checking had missed for weeks — a multi-item VAT
-error, a multiplication error, and margin confused with markup. **Eval questions are never
-reproduced in training data**; the drills randomise their numbers and phrasings, because training
-on the gate would destroy the gate.
+**We measure what we ship, and we gate on it.** Three harnesses run against the quantized GGUF
+at greedy decoding: `fact_eval.py` (37 adversarially-phrased Nigeria questions, including casual
+and Pidgin framings), `arith_eval.py` (12 arithmetic cases), and `narration_eval.py` (5 checks
+that the model never invents a figure when restating engine output). Building the arithmetic gate
+immediately exposed three defects hand-checking had missed for weeks — a multi-item VAT error, a
+multiplication error, and margin confused with markup. **Eval questions never appear in training
+data**; a contamination guard fails the build if they do.
 
-The Nigeria fact base is the depth play. Every figure is tagged `primary_confirmed` (found verbatim
-in the OCR'd official Gazette / clean-text Administration Act — e.g. the 0%/30% CIT split, the 4%
-Development Levy) or `secondary_corroborated` (agreed by ≥2 reputable firms — EY, KPMG, Baker Tilly —
-pending primary grep). The generator is **forbidden from stating any number not in that file**, hedges
-language by confidence tag, and always closes with "confirm with FIRS / an accountant" — responsible
-advisory practice, not evasion.
+The fact base is the depth play. Every figure is tagged `primary_confirmed` (verbatim in the OCR'd
+Gazette or Administration Act — the 0%/30% CIT split, the 4% Development Levy) or
+`secondary_corroborated` (agreed by ≥2 of EY, KPMG, Baker Tilly). The generator is **forbidden
+from stating any number not in that file**, hedges by confidence tag, and closes with "confirm
+with FIRS / an accountant".
 
-**Overfit guard for the hidden prompts.** We split train/holdout **by scenario family**, not by row:
-whole business-type/topic/country *combinations* are held out, so the holdout set contains scenario
-*shapes* the model never trained on — the closest proxy we can build for the organizers' 3 hidden
-in-domain prompts. Our 2 declared `test_prompts` are representative, not cherry-picked.
+**Overfit guard.** Train/holdout is split **by scenario family**, not by row: whole
+business-type/topic/country combinations are held out, so the holdout contains scenario *shapes*
+never trained on — the closest proxy for the organizers' 3 hidden prompts. Our 2 declared
+`test_prompts` are representative, not cherry-picked.
 
 ## 4. Constraints, and what they forced
 
