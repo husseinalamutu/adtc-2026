@@ -1,6 +1,12 @@
-model/
-!model/.gitkeep
+# Model weights — never commit these to git (template convention)
+model/*.gguf
+model/*.bin
+model/*.safetensors
 *.gguf
+
+# Local profiler output
+submission.json
+audit.json
 __pycache__/
 *.pyc
 .venv/
