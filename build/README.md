@@ -1,7 +1,7 @@
 # Build recipe — fine-tune → merge → GGUF → imatrix → Q4_K_M
 
 One command should rebuild the exact submitted GGUF from the base model + dataset (see
-`STRATEGY.md` reproducibility checklist). This directory is that recipe.
+`REPORT.md` reproducibility section). This directory is that recipe.
 
 ## Hardware reality check
 
@@ -44,7 +44,7 @@ GGUF f16
 imatrix.dat
    │  llama-quantize --imatrix imatrix.dat  Q4_K_M
    ▼
-submission/model/*.gguf  ──►  smoke test (local) ──►  full profiler run (target-class VM)
+model/*.gguf  ──►  smoke test (local) ──►  full profiler run (target-class VM)
 ```
 
 Scripts, run in order:
@@ -61,8 +61,8 @@ Scripts, run in order:
 ## Config
 
 All run parameters (model id, LoRA rank, learning rate, context length, quant type) live in
-`config.yaml` — mirror any changes into `submission/metadata.json` so your claims match your
-artifact (per `STRATEGY.md`'s "config over hardcoding" rule).
+`config.yaml` — mirror any changes into `metadata.json` so your claims match your
+artifact (config over hardcoding).
 
 ## Reproducibility
 

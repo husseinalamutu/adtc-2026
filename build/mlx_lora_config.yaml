@@ -2,7 +2,7 @@
 # and examples/lora_config.yaml). LoRA parameters can ONLY be set here, not via CLI flags.
 # Run with: mlx_lm.lora --config mlx_lora_config.yaml
 #
-# Mirror any change here into config.yaml's summary block and into submission/metadata.json.
+# Mirror any change here into config.yaml's summary block and into metadata.json.
 
 # TRUE QLoRA — 4-bit quantized base (local dir). CRITICAL FINDING (2026-07-08): pointing at the
 # full-precision "Qwen/Qwen2.5-3B-Instruct" loads a bf16 base = 6.17 GB of weights alone, which

@@ -202,13 +202,6 @@ def do_quote(p: dict) -> dict:
                                   verified)}
 
 
-# NOTE (historical): the quote feature was briefly removed on 2026-08-12. In Nigeria most
-# manufacturer-priced goods — cement, petrol, regulated items — are quoted VAT-INCLUSIVE, so a
-# tool that always adds 7.5% on top would overcharge the customer and misstate the retailer's
-# VAT. Handling that correctly needs an inclusive/exclusive distinction per line item; until
-# that exists, shipping the naive version would give confidently wrong figures on exactly the
-# goods our users trade most. `TaxRules.vat_quote` remains in the engine (tested) for the
-# tax tab's arithmetic.
 
 # Real exports don't use our column names. Map the common variants once, here.
 _COLS = {

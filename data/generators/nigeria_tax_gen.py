@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Nigeria tax/compliance generator — deep, source-grounded coverage of the 2025 Tax Reform
-Acts (effective 2026-01-01), for the "African use case" depth play (see STRATEGY.md).
+Acts (effective 2026-01-01), for the "African use case" depth play (see REPORT.md).
 
 Grounding chain (see seeds/nigeria_tax_facts.json _meta for full source list):
     OCR of the official Gazette (Nigeria Tax Act 2025, scanned, tesseract)

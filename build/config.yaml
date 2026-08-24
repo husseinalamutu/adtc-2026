@@ -2,7 +2,7 @@
 # (see mlx_lora_config.yaml for the fine-tuning hyperparameters — that file's schema is
 # mlx_lm's own and is consumed directly via `mlx_lm.lora --config mlx_lora_config.yaml`).
 #
-# Mirror any change here into submission/metadata.json so claims match the rebuilt artifact.
+# Mirror any change here into metadata.json so claims match the rebuilt artifact.
 
 base_model:
   # Logical base model (what REPORT.md cites as the foundation):
@@ -21,7 +21,7 @@ quantization:
   imatrix_calibration_samples: 200   # pulled from data/out/train.jsonl by 04_imatrix_quantize.sh
 
 runtime:
-  # Mirror into submission/metadata.json's `_runtime.model_path` and the profiler self-check.
+  # Mirror into metadata.json's `_runtime.model_path` and the profiler self-check.
   threads: 4
   context: 2048
   model_path: "model/alamz-tech-sme-copilot-Q4_K_M.gguf"

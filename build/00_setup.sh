@@ -4,7 +4,7 @@
 #
 # IMPORTANT: this local llama.cpp build is for DEVELOPMENT ONLY. The TPS/RSS numbers you
 # submit must come from infra/provision_benchmark_vm.sh's x86 target-class VM build, not
-# this Mac — Apple Silicon performance characteristics don't transfer. See STRATEGY.md.
+# this Mac — Apple Silicon performance characteristics don't transfer. See REPORT.md.
 set -euo pipefail
 cd "$(dirname "$0")"
 

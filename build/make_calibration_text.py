@@ -2,7 +2,7 @@
 """
 Build a domain-representative calibration text file for llama-imatrix from
 data/out/train.jsonl. Sampling from the fine-tune's own domain (not generic text) is what
-makes the imatrix actually recover accuracy on OUR domain at Q4_K_M (STRATEGY.md §7).
+makes the imatrix actually recover accuracy on OUR domain at Q4_K_M (see REPORT.md, quantization).
 """
 import argparse
 import json

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 """
 The single most valuable test in the project. Runs the REAL adtc-profiler package
-(verified by installing it and reading its source directly — see STRATEGY.md's
-"profiler ground truth" note) in participant mode and asserts we're safely inside the two
+(verified by installing it and reading its source directly) in participant mode and asserts we're safely inside the two
 limits that zero us out or cost points:
 
     memory.peak_rss_mb          < 6500   (hard DQ line is 7168 MB / 7.0 GB; margin for the
@@ -16,7 +15,7 @@ GGUF, relative to `<dir>`. Report JSON is nested: report["throughput"]["..."],
 report["memory"]["..."], report["cpu_thermal"]["throttled"] — NOT flat top-level keys.
 
 Run on target-class HW after every model rebuild:
-    python3 telemetry_test.py --submission ../submission
+    python3 telemetry_test.py --submission ..
 Exit code 0 = safe to submit; non-zero = fix before submitting.
 """
 import argparse
@@ -29,7 +28,7 @@ from pathlib import Path
 
 RSS_CEILING_MB = 6500.0
 # Speed has NO floor: the website's S_perf = 100·TPS_act/TPS_max is relative to the fastest
-# submission (the profiler README's min(TPS/15,1) is stale — see STRATEGY.md "Scoring math").
+# submission (the profiler README's min(TPS/15,1) is stale — see REPORT.md "Benchmarks").
 # Under the audit's scalar (SIMD-off) build our 3B measures ~2.75 tok/s on target hardware,
 # so TPS is reported informationally, never pass/fail.
 # The profiler's own thermal.py hardcodes 95.0°C as a placeholder (explicitly marked
@@ -62,7 +61,7 @@ def run_profiler(submission_dir: str) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--submission", default="../submission", help="Path to the submission directory (must contain metadata.json + the GGUF it references)")
+    ap.add_argument("--submission", default="..", help="Path to the submission directory (must contain metadata.json + the GGUF it references)")
     ap.add_argument("--from-json", help="skip the run; assert against an existing profiler report JSON")
     args = ap.parse_args()
 
@@ -92,7 +91,7 @@ def main() -> int:
 
     print(f"model_info.params_match = {params_match}   (False = metadata.json parameters_estimate looks like it understates the real GGUF — fix it)")
     if not params_match:
-        print("  FAIL: parameter-count fraud check failed — update submission/metadata.json's model.parameters_estimate."); ok = False
+        print("  FAIL: parameter-count fraud check failed — update metadata.json's model.parameters_estimate."); ok = False
 
     print("\n" + ("PASS — safe to submit." if ok else "NOT SAFE — fix before submitting."))
     return 0 if ok else 1

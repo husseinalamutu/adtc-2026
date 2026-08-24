@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 # Gate-1 deliverable: idempotent, credential-free fetch of the submission GGUF into model/.
 # The organizers run this in a clean clone; it must need no login and land the exact file
-# that submission/metadata.json's _runtime.model_path points at.
+# that metadata.json's _runtime.model_path points at.
 #
 # Also how the Dell (or any machine) gets the 1.93GB model that can't live in git.
 set -euo pipefail
 cd "$(dirname "$0")"
 
-# --- EDIT THESE two once the HF repo exists (see submission/HUGGINGFACE_SETUP.md) ---
+# --- Model location on Hugging Face ---
 HF_REPO="HusseinAlamutu/alamz-tech-sme-copilot-gguf"   # live: huggingface.co/HusseinAlamutu/alamz-tech-sme-copilot-gguf
 HF_FILE="alamz-tech-sme-copilot-Q4_K_M.gguf"
 # -----------------------------------------------------------------------------------

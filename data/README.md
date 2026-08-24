@@ -19,7 +19,7 @@ everywhere. We went **layered** instead:
 3. **A RAG document-upload feature in the demo app** (not this pipeline — see `demo/` once
    built) lets a user upload their own country's tax law PDF for grounding. This is a **demo-only**
    differentiator: the sandbox never runs RAG, so it must never be the thing standing between the
-   bare model and a correct answer — see `STRATEGY.md`.
+   bare model and a correct answer — see `REPORT.md`.
 
 ## Why three generators
 

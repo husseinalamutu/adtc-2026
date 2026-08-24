@@ -1,6 +1,6 @@
 # finance/ — the deterministic half of the pairing
 
-This is the load-bearing cross-disciplinary module declared in `submission/metadata.json`:
+This is the load-bearing cross-disciplinary module declared in `metadata.json`:
 a finance/accounting engine the LLM is *paired with*, not a wrapper around it.
 
 **Division of labor** (why neither half works alone):

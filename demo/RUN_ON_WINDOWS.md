@@ -32,7 +32,7 @@ unzip it, and `cd` into the folder.
 
 ## 2. Get the model
 
-`submission/download_model.sh` is a bash script. On Windows, either run it in **Git Bash**, or
+`download_model.sh` is a bash script. On Windows, either run it in **Git Bash**, or
 just download the file directly:
 
 ```powershell

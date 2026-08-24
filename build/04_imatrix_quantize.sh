@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Compute a domain-representative importance matrix, then quantize to Q4_K_M.
 # Imatrix is what recovers most of the accuracy Q4_K_M would otherwise cost — see
-# STRATEGY.md §7. Never skip it to save time.
+# REPORT.md (quantization). Never skip it to save time.
 set -euo pipefail
 cd "$(dirname "$0")"
 source .venv/bin/activate
@@ -47,4 +47,4 @@ OUT="gguf/model-${QUANT_TYPE}.gguf"
 echo
 echo "DONE. -> $OUT"
 ls -la "$OUT"
-echo "Next: 05_smoke_test.sh, then copy to submission/model/ and re-run benchmark/telemetry_test.py on the TARGET-CLASS VM (not this Mac)."
+echo "Next: 05_smoke_test.sh, then copy to model/ and re-run benchmark/telemetry_test.py on the TARGET-CLASS VM (not this Mac)."

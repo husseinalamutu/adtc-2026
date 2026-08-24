@@ -29,9 +29,9 @@ fi
 
 docker build ${PLATFORM_FLAG[@]+"${PLATFORM_FLAG[@]}"} -t "$TAG" -f docker/Dockerfile docker/
 
-if ! ls submission/model/*.gguf >/dev/null 2>&1; then
+if ! ls model/*.gguf >/dev/null 2>&1; then
   echo
-  echo "!! No GGUF found under submission/model/ — this will fail at 'model file not found'." >&2
+  echo "!! No GGUF found under model/ — this will fail at 'model file not found'." >&2
   echo "   That's expected until build/04_imatrix_quantize.sh has produced one." >&2
 fi
 
@@ -40,7 +40,7 @@ echo "==> Running: adtc-profiler run --submission /submission --mode participant
 docker run --rm \
   ${PLATFORM_FLAG[@]+"${PLATFORM_FLAG[@]}"} \
   --cpus=4 --memory=7.5g \
-  -v "$(pwd)/submission:/submission:ro" \
+  -v "$(pwd):/submission:ro" \
   -v "$(pwd)/artifacts:/artifacts" \
   "$TAG" \
   run --submission /submission --mode participant --output /artifacts/local_report.json --skip-accuracy

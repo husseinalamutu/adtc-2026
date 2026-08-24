@@ -15,7 +15,7 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
 1. **The repo** — `git clone <your repo URL>` on the PC (or copy the folder). The code is small.
 2. **The model file** — `alamz-tech-sme-copilot-Q4_K_M.gguf` (1.93 GB). It's git-ignored, so cloning
    does NOT bring it. Transfer it separately (USB stick is the most reliable for 1.9 GB) into:
-   `adtc-2026/submission/model/alamz-tech-sme-copilot-Q4_K_M.gguf`
+   `adtc-2026/model/alamz-tech-sme-copilot-Q4_K_M.gguf`
    (Later we'll publish it to Hugging Face so `download_model.sh` fetches it automatically — but
    for this one-off benchmark, a USB copy is fastest.)
 
@@ -27,7 +27,7 @@ one). Two paths — **Docker is easiest**; WSL2-native is the fallback.
    "Use WSL 2 instead of Hyper-V". Reboot if asked, then launch Docker Desktop once so the engine
    is running.
 2. Open **Git Bash** (comes with Git for Windows) or a **WSL2 Ubuntu** terminal, `cd` into the repo.
-3. Confirm the model is in place: `ls -la submission/model/*.gguf` (should show ~1.9 GB).
+3. Confirm the model is in place: `ls -la model/*.gguf` (should show ~1.9 GB).
 4. Run:
    ```bash
    bash docker/run_local_emulation.sh
@@ -42,7 +42,7 @@ speed is scored **relative to the fastest submission** (`S_perf = 100·TPS/TPS_m
 Paste the three lines back.
 > **MEASURED 2026-07-12:** peak_rss 2052 MB, **2.75 tok/s** (`-t 4`; ~2.0 auto-threads),
 > throttled=false. ~8-10× below AVX2 numbers because the audit build disables all SIMD —
-> this hits every submission equally; see STRATEGY.md "Scoring math" and
+> this hits every submission equally; see REPORT.md "Benchmarks" and
 > build/results/model_size_tradeoff_2026-07-13.md for why we kept the 3B anyway.
 
 ---
@@ -55,7 +55,7 @@ Paste the three lines back.
    ```bash
    sudo bash infra/provision_benchmark_vm.sh    # builds llama.cpp (audit flags) + installs adtc-profiler (~5 min)
    export PATH="$HOME/adtc/llama.cpp/build/bin:$PATH"   # so the profiler finds llama-bench
-   cd benchmark && python3 telemetry_test.py --submission ../submission
+   cd benchmark && python3 telemetry_test.py --submission ..
    ```
    `telemetry_test.py` prints PASS/FAIL against the RSS ceiling (TPS is reported informationally).
 

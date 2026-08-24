@@ -38,14 +38,14 @@ for entry in "${MODELS[@]}"; do
   [ -f "$path" ] || { echo ">> downloading $label ..." >&2; curl -fL --retry 3 -o "$path" "$url" || { echo "  download FAILED for $label — check URL" >&2; continue; }; }
 
   # Build a disposable submission dir for this candidate: a copy of our real
-  # submission/metadata.json with only model_path swapped, symlinked to the candidate GGUF.
+  # metadata.json with only model_path swapped, symlinked to the candidate GGUF.
   SUB="$SCRATCH/$label"
   mkdir -p "$SUB/model"
   ln -sf "$(pwd)/$path" "$SUB/model/model.gguf"
   python3 - "$SUB" <<'PYEOF'
 import json, sys
 sub = sys.argv[1]
-meta = json.load(open("submission/metadata.json"))
+meta = json.load(open("metadata.json"))
 meta["_runtime"]["model_path"] = "model/model.gguf"
 meta["model"]["name"] = "baseline-candidate"
 json.dump(meta, open(f"{sub}/metadata.json", "w"))

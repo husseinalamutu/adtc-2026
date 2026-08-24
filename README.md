@@ -5,7 +5,7 @@ Our entry for the [Africa Deep Tech Challenge 2026](https://africadeeptech.org/c
 (invoicing, mobile-money reconciliation, local tax/compliance), running 100% offline via llama.cpp
 on an 8 GB laptop.
 
-**Read [`STRATEGY.md`](STRATEGY.md) first** — it locks every decision and is the source of truth.
+**Read [`REPORT.md`](REPORT.md) first** — it covers the problem, design decisions, constraints and benchmarks.
 
 ## Repo layout
 | Dir | Purpose |
@@ -13,7 +13,7 @@ on an 8 GB laptop.
 | `infra/` | Provision a target-class benchmarking VM (4 vCPU / 8 GB / no GPU). |
 | `benchmark/` | Baseline candidate models; the telemetry regression test (RSS < 6.5 GB; TPS informational — scored relative to the field). |
 | `build/` | Fine-tune → merge → GGUF → imatrix → quantize recipe (one command rebuilds the exact model). |
-| `eval/` | Domain accuracy smoke tests + overfit hold-out (proxy for the 3 hidden prompts). |
+| `demo/` | Deterministic finance engine + the offline app (the load-bearing pairing). |
 | `demo/` | Offline demo app (LLM + finance/tax integration) for the video & live defense. |
 | `submission/` | What gets forked into the official template: `metadata.json`, `download_model.sh`, `REPORT.md`. |
 
