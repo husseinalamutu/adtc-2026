@@ -10,8 +10,6 @@ on an 8 GB laptop.
 ## Repo layout
 | Dir | Purpose |
 |---|---|
-| `infra/` | Provision a target-class benchmarking VM (4 vCPU / 8 GB / no GPU). |
-| `benchmark/` | Baseline candidate models; the telemetry regression test (RSS < 6.5 GB; TPS informational — scored relative to the field). |
 | `build/` | Fine-tune → merge → GGUF → imatrix → quantize recipe (one command rebuilds the exact model). |
 | `demo/` | Deterministic finance engine + the offline app (the load-bearing pairing). |
 | `demo/` | Offline demo app (LLM + finance/tax integration) for the video & live defense. |
@@ -25,6 +23,4 @@ on an 8 GB laptop.
 
 ## Quick start (once you have a VM IP)
 ```bash
-scp infra/provision_benchmark_vm.sh root@IP:~/ && ssh root@IP 'bash provision_benchmark_vm.sh'
-scp benchmark/*.{sh,py} root@IP:~/adtc/ && ssh root@IP 'cd ~/adtc && bash run_baseline.sh'
 ```

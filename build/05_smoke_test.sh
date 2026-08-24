@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Quick local sanity check that the quantized GGUF isn't broken — NOT a substitute for
-# benchmark/telemetry_test.py on the target-class VM (Apple Silicon perf != x86 audit numbers).
+# profiling on target-class x86 hardware (Apple Silicon perf != x86 audit numbers).
 set -euo pipefail
 cd "$(dirname "$0")"
 

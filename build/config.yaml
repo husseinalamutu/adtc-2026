@@ -27,6 +27,6 @@ runtime:
   model_path: "model/alamz-tech-sme-copilot-Q4_K_M.gguf"
 
 llamacpp:
-  # Matches infra/provision_benchmark_vm.sh's LLAMACPP_COMMIT and docker/Dockerfile's
+  # llama.cpp revision used for the audited build
   # built binary (confirmed via `llama-cli --version` -> "bec4772" after the docker build).
   commit: "bec4772f6a2527d371557b5d2032641e5ff7619c"

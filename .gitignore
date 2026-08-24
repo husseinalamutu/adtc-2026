@@ -1,4 +1,5 @@
 model/
+!model/.gitkeep
 *.gguf
 __pycache__/
 *.pyc

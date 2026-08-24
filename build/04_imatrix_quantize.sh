@@ -47,4 +47,4 @@ OUT="gguf/model-${QUANT_TYPE}.gguf"
 echo
 echo "DONE. -> $OUT"
 ls -la "$OUT"
-echo "Next: 05_smoke_test.sh, then copy to model/ and re-run benchmark/telemetry_test.py on the TARGET-CLASS VM (not this Mac)."
+echo "Next: 05_smoke_test.sh, then copy to model/ and profile on TARGET-CLASS x86 hardware (not this Mac)."

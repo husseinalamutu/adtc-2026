@@ -3,7 +3,7 @@
 # build for the dev loop (conversion, imatrix, quantize, smoke-testing).
 #
 # IMPORTANT: this local llama.cpp build is for DEVELOPMENT ONLY. The TPS/RSS numbers you
-# submit must come from infra/provision_benchmark_vm.sh's x86 target-class VM build, not
+# submit must come from an x86 target-class build, not
 # this Mac — Apple Silicon performance characteristics don't transfer. See REPORT.md.
 set -euo pipefail
 cd "$(dirname "$0")"
@@ -39,7 +39,7 @@ print(yaml.safe_load(open('$(cd "$(dirname "$0")" && pwd)/config.yaml'))['llamac
 " 2>/dev/null || echo "master")
 
 if [[ "$LLAMACPP_COMMIT" == TODO* ]]; then
-  echo "  !! config.yaml llamacpp.commit not pinned yet — using master. Pin it once infra/ has a commit." >&2
+  echo "  !! config.yaml llamacpp.commit not pinned yet — using master." >&2
   LLAMACPP_COMMIT="master"
 fi
 git checkout --quiet "$LLAMACPP_COMMIT"

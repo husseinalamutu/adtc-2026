@@ -18,7 +18,7 @@ This Mac is an **Apple M2 with 8 GB unified memory**. It comfortably does a **fu
   already in `mlx_lora_config.yaml`. No cloud GPU needed.
 - **A 4B QLoRA base would very likely also fit locally now** (4-bit 4B ≈ 2.2–2.5 GB + our
   ~2 GB of activations ≈ well under 8 GB). The real gate on 4B is the VM speed floor
-  (`benchmark/run_baseline.sh`, task #7), not this Mac's memory.
+  on target-class x86 hardware, not this Mac's memory.
 - To probe headroom for any new config: run `mlx_lora_config.probe.yaml` (short run) and read the
   `Peak mem` line — that reading is trustworthy. Stay under ~7.0 GB peak.
 - If a config ever OOMs: lower `max_seq_length`, then `num_layers`, then LoRA `rank`, in that order.
@@ -51,12 +51,12 @@ Scripts, run in order:
 
 | Script | What it does |
 |---|---|
-| `00_setup.sh` | Installs `mlx-lm`; builds a local (Metal-accelerated) llama.cpp for dev-loop use only — **not** the benchmarking build (that's `infra/provision_benchmark_vm.sh` on the x86 VM; numbers from this Mac are never submitted). |
+| `00_setup.sh` | Installs `mlx-lm`; builds a local (Metal-accelerated) llama.cpp for dev-loop use only — **not** the benchmarking build (audited numbers come from target-class x86 hardware; numbers from this Mac are never submitted). |
 | `01_finetune_mlx.sh` | Runs QLoRA fine-tuning via `mlx_lm.lora` on `data/out/train.jsonl`. Config in `config.yaml`. |
 | `02_merge.sh` | Fuses the LoRA adapters into the base weights (`mlx_lm.fuse`), exports HF-format safetensors. |
 | `03_to_gguf.sh` | Converts the merged HF model to GGUF f16 via llama.cpp's `convert_hf_to_gguf.py`. |
 | `04_imatrix_quantize.sh` | Computes an importance matrix from `calibration_text.txt` (domain-representative — pulled from `data/out/train.jsonl`), then quantizes to Q4_K_M. |
-| `05_smoke_test.sh` | Runs a couple of prompts through the quantized GGUF locally (Metal) to sanity-check it isn't broken. **Not** a substitute for `benchmark/telemetry_test.py` on the target-class VM. |
+| `05_smoke_test.sh` | Runs a couple of prompts through the quantized GGUF locally (Metal) to sanity-check it isn't broken. **Not** a substitute for profiling on target-class x86 hardware. |
 
 ## Config
 
