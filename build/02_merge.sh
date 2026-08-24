@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Fuse LoRA adapters into the base model -> HF-format merged safetensors.
 # Deliberately does NOT use mlx_lm.fuse's --export-gguf: that path skips imatrix calibration,
-# and imatrix is where we recover most of the accuracy Q4_K_M would otherwise cost (see REPORT.md
-# §7). We go through llama.cpp's own converter instead (03_to_gguf.sh) so imatrix is in the loop.
+# and imatrix is where we recover most of the accuracy Q4_K_M would otherwise cost (see REPORT.md's
+# Design decisions section). We go through llama.cpp's own converter instead (03_to_gguf.sh) so
+# imatrix is in the loop.
 set -euo pipefail
 cd "$(dirname "$0")"
 source .venv/bin/activate

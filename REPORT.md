@@ -51,9 +51,9 @@ a 1.5B trained on identical data matched the 3B on fact recall (35/37 vs 34/37) 
 multi-invoice reconciliation arithmetic — including the class of our own test prompt p1** — for
 ~2× speed. Accuracy is 50% of the score, so we kept the 3B. We rejected 7–8B (~2× slower again,
 and it risks the 7 GB OOM line). Qwen2.5-3B for its reasoning quality and mature GGUF ecosystem;
-its licence is *not* permissive (see §1b). We fine-tune the **pre-quantized 4-bit build**
-(`mlx-community/Qwen2.5-3B-Instruct-4bit`) — true QLoRA, and what makes a full-quality fine-tune
-fit in 8 GB (§4).
+its licence is *not* permissive (see the Licensing section below). We fine-tune the
+**pre-quantized 4-bit build** (`mlx-community/Qwen2.5-3B-Instruct-4bit`) — true QLoRA, and what
+makes a full-quality fine-tune fit in 8 GB (Constraints, below).
 
 **Fine-tune, don't rely on RAG.** The sandbox scores the **bare model** on 2 declared + 3 hidden
 prompts; no retrieval pipeline runs. Domain accuracy therefore has to live in the weights. A

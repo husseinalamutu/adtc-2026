@@ -53,4 +53,4 @@ python3 build/narration_eval.py  # 5 narration-fidelity checks
 ## Licence
 
 Code MIT; model weights under the Qwen Research Licence (non-commercial) — see
-[`LICENSE`](LICENSE) and REPORT.md §1b.
+[`LICENSE`](LICENSE) and REPORT.md's Licensing section.
