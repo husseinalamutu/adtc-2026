@@ -18,15 +18,11 @@ a shop owner will not keep).
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from datetime import date
+from decimal import Decimal
+from .money import d as _d
 
-TWO = Decimal("0.01")
 DEAD_STOCK_DAYS = 90        # no outward movement in this long = capital sitting idle
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO, rounding=ROUND_HALF_UP)
 
 
 @dataclass

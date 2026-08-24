@@ -16,15 +16,11 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from statistics import median
+from .money import d as _d
 
-TWO = Decimal("0.01")
 MIN_MONTHS = 2          # below this there is no history to project from — say so, don't guess
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO, rounding=ROUND_HALF_UP)
 
 
 def _median(values: list[Decimal]) -> Decimal:

@@ -13,10 +13,10 @@ import csv
 import sqlite3
 from dataclasses import dataclass
 from datetime import date, datetime
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
 from pathlib import Path
+from .money import d as _d
 
-TWO = Decimal("0.01")
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS transactions (
@@ -52,10 +52,6 @@ CREATE INDEX IF NOT EXISTS idx_txn_date ON transactions (txn_date);
 CREATE INDEX IF NOT EXISTS idx_txn_cat  ON transactions (category);
 CREATE INDEX IF NOT EXISTS idx_stock_sku ON stock_movements (sku);
 """
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO, rounding=ROUND_HALF_UP)
 
 
 @dataclass(frozen=True)

@@ -20,10 +20,8 @@ console output. Compare across checkpoints to confirm loss is actually decreasin
     python3 check_loss_sanity.py --n-examples 20            # base model, no adapter (baseline)
 """
 import argparse
-import json
 import statistics
 import types
-from pathlib import Path
 
 import mlx.core as mx
 from mlx_lm.tuner.datasets import CacheDataset, load_dataset

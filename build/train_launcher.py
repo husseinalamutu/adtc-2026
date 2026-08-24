@@ -9,7 +9,6 @@ allocations so the allocator recycles buffers instead of growing/freeing unbound
 Observed training peak is ~4.2 GB on this 8 GB M2, so the caps below leave headroom
 while keeping MLX well away from the wired-memory cliff.
 """
-import sys
 
 import mlx.core as mx
 

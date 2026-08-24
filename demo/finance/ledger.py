@@ -13,15 +13,9 @@ Accounts: CASH, ACCOUNTS_RECEIVABLE, SALES, CUSTOMER_CREDIT (unapplied overpayme
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from decimal import Decimal, ROUND_HALF_UP
-
+from decimal import Decimal
 from .momo_parser import Transaction
-
-TWO_PLACES = Decimal("0.01")
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO_PLACES, rounding=ROUND_HALF_UP)
+from .money import d as _d
 
 
 @dataclass

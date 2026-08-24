@@ -8,14 +8,10 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date, timedelta
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
+from .money import d as _d
 
-TWO = Decimal("0.01")
 COGS_CATEGORIES = {"Inventory purchase"}   # what counts against gross margin
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO, rounding=ROUND_HALF_UP)
 
 
 def _pct_change(now: Decimal, before: Decimal) -> Decimal | None:

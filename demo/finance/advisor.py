@@ -14,23 +14,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal
+from .money import d as _d
 
 from . import anomalies as anomaly_mod
 from . import inventory as inventory_mod
 from .analytics import business_health, customers_owing, prev_month_bounds, period_summary
 from .forecast import project
 
-TWO = Decimal("0.01")
 
 # Spend the operator can realistically throttle within a month without stopping trading.
 DISCRETIONARY = {"Transport", "Airtime & data", "Entertainment", "Miscellaneous", "Bank charges"}
 # Slow stock clears at a discount; assume 70% of book cost is realisable in a hurry.
 DEAD_STOCK_RECOVERY = Decimal("0.70")
-
-
-def _d(x) -> Decimal:
-    return Decimal(str(x)).quantize(TWO, rounding=ROUND_HALF_UP)
 
 
 @dataclass
